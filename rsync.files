@@ -5,6 +5,7 @@
 ./LICENSE
 ./README.md
 ./environment.yml
+./fav.log.sort
 ./includefile.conf
 ./nbs/.gitignore
 ./nbs/01_intro.ipynb
@@ -33,4 +34,5 @@
 ./prunefile.conf
 ./prunefix.conf
 ./requirements.txt
+./rsync.files
 ./setup.cfg
