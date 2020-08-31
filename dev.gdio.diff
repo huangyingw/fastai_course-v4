@@ -1,0 +1,6002 @@
+diff --git a/nbs/01_intro.py b/nbs/01_intro.py
+new file mode 100644
+index 0000000..ddd1129
+--- /dev/null
++++ ./nbs/01_intro.py
+@@ -0,0 +1,262 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # Your Deep Learning Journey
++
++# ## Deep Learning Is for Everyone
++
++# ## Neural Networks: A Brief History
++
++# ## Who We Are
++
++# ## How to Learn Deep Learning
++
++# ### Your Projects and Your Mindset
++
++# ## The Software: PyTorch, fastai, and Jupyter
++
++# ## Your First Model
++
++# ### Getting a GPU Deep Learning Server
++
++# ### Running Your First Notebook
++
++# +
++# CLICK ME
++from fastai.vision.all import *
++path = untar_data(URLs.PETS)/'images'
++
++def is_cat(x): return x[0].isupper()
++dls = ImageDataLoaders.from_name_func(
++    path, get_image_files(path), valid_pct=0.2, seed=42,
++    label_func=is_cat, item_tfms=Resize(224))
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fine_tune(1)
++# -
++
++# ### Sidebar: This Book Was Written in Jupyter Notebooks
++
++1+1
++
++img = PILImage.create('images/chapter1_cat_example.jpg')
++img.to_thumb(192)
++
++# ### End sidebar
++
++uploader = widgets.FileUpload()
++uploader
++
++# + hide_input=true
++#hide
++# For the book, we can't actually click an upload button, so we fake it
++uploader = SimpleNamespace(data = ['images/chapter1_cat_example.jpg'])
++# -
++
++img = PILImage.create(uploader.data[0])
++is_cat,_,probs = learn.predict(img)
++print(f"Is this a cat?: {is_cat}.")
++print(f"Probability it's a cat: {probs[1].item():.6f}")
++
++# ### What Is Machine Learning?
++
++# + hide_input=false
++gv('''program[shape=box3d width=1 height=0.7]
++inputs->program->results''')
++
++# + hide_input=true
++gv('''model[shape=box3d width=1 height=0.7]
++inputs->model->results; weights->model''')
++
++# + hide_input=true
++gv('''ordering=in
++model[shape=box3d width=1 height=0.7]
++inputs->model->results; weights->model; results->performance
++performance->weights[constraint=false label=update]''')
++
++# + hide_input=true
++gv('''model[shape=box3d width=1 height=0.7]
++inputs->model->results''')
++# -
++
++# ### What Is a Neural Network?
++
++# ### A Bit of Deep Learning Jargon
++
++# + hide_input=true
++gv('''ordering=in
++model[shape=box3d width=1 height=0.7 label=architecture]
++inputs->model->predictions; parameters->model; labels->loss; predictions->loss
++loss->parameters[constraint=false label=update]''')
++# -
++
++# ### Limitations Inherent To Machine Learning
++#
++# From this picture we can now see some fundamental things about training a deep learning model:
++#
++# - A model cannot be created without data.
++# - A model can only learn to operate on the patterns seen in the input data used to train it.
++# - This learning approach only creates *predictions*, not recommended *actions*.
++# - It's not enough to just have examples of input data; we need *labels* for that data too (e.g., pictures of dogs and cats aren't enough to train a model; we need a label for each one, saying which ones are dogs, and which are cats).
++#
++# Generally speaking, we've seen that most organizations that say they don't have enough data, actually mean they don't have enough *labeled* data. If any organization is interested in doing something in practice with a model, then presumably they have some inputs they plan to run their model against. And presumably they've been doing that some other way for a while (e.g., manually, or with some heuristic program), so they have data from those processes! For instance, a radiology practice will almost certainly have an archive of medical scans (since they need to be able to check how their patients are progressing over time), but those scans may not have structured labels containing a list of diagnoses or interventions (since radiologists generally create free-text natural language reports, not structured data). We'll be discussing labeling approaches a lot in this book, because it's such an important issue in practice.
++#
++# Since these kinds of machine learning models can only make *predictions* (i.e., attempt to replicate labels), this can result in a significant gap between organizational goals and model capabilities. For instance, in this book you'll learn how to create a *recommendation system* that can predict what products a user might purchase. This is often used in e-commerce, such as to customize products shown on a home page by showing the highest-ranked items. But such a model is generally created by looking at a user and their buying history (*inputs*) and what they went on to buy or look at (*labels*), which means that the model is likely to tell you about products the user already has or already knows about, rather than new products that they are most likely to be interested in hearing about. That's very different to what, say, an expert at your local bookseller might do, where they ask questions to figure out your taste, and then tell you about authors or series that you've never heard of before.
++
++# ### How Our Image Recognizer Works
++
++# ### What Our Image Recognizer Learned
++
++# ### Image Recognizers Can Tackle Non-Image Tasks
++
++# ### Jargon Recap
++
++# ## Deep Learning Is Not Just for Image Classification
++
++# +
++path = untar_data(URLs.CAMVID_TINY)
++dls = SegmentationDataLoaders.from_label_func(
++    path, bs=8, fnames = get_image_files(path/"images"),
++    label_func = lambda o: path/'labels'/f'{o.stem}_P{o.suffix}',
++    codes = np.loadtxt(path/'codes.txt', dtype=str)
++)
++
++learn = unet_learner(dls, resnet34)
++learn.fine_tune(8)
++# -
++
++learn.show_results(max_n=6, figsize=(7,8))
++
++# +
++from fastai.text.all import *
++
++dls = TextDataLoaders.from_folder(untar_data(URLs.IMDB), valid='test')
++learn = text_classifier_learner(dls, AWD_LSTM, drop_mult=0.5, metrics=accuracy)
++learn.fine_tune(4, 1e-2)
++# -
++
++# If you hit a "CUDA out of memory error" after running this cell, click on the menu Kernel, then restart. Instead of executing the cell above, copy and paste the following code in it:
++#
++# ```
++# from fastai.text.all import *
++#
++# dls = TextDataLoaders.from_folder(untar_data(URLs.IMDB), valid='test', bs=32)
++# learn = text_classifier_learner(dls, AWD_LSTM, drop_mult=0.5, metrics=accuracy)
++# learn.fine_tune(4, 1e-2)
++# ```
++#
++# This reduces the batch size to 32 (we will explain this later). If you keep hitting the same error, change 32 to 16.
++
++learn.predict("I really liked that movie!")
++
++# ### Sidebar: The Order Matters
++
++# ### End sidebar
++
++# +
++from fastai.tabular.all import *
++path = untar_data(URLs.ADULT_SAMPLE)
++
++dls = TabularDataLoaders.from_csv(path/'adult.csv', path=path, y_names="salary",
++    cat_names = ['workclass', 'education', 'marital-status', 'occupation',
++                 'relationship', 'race'],
++    cont_names = ['age', 'fnlwgt', 'education-num'],
++    procs = [Categorify, FillMissing, Normalize])
++
++learn = tabular_learner(dls, metrics=accuracy)
++# -
++
++learn.fit_one_cycle(3)
++
++from fastai.collab import *
++path = untar_data(URLs.ML_SAMPLE)
++dls = CollabDataLoaders.from_csv(path/'ratings.csv')
++learn = collab_learner(dls, y_range=(0.5,5.5))
++learn.fine_tune(10)
++
++learn.show_results()
++
++# ### Sidebar: Datasets: Food for Models
++
++# ### End sidebar
++
++# ## Validation Sets and Test Sets
++
++# ### Use Judgment in Defining Test Sets
++
++# ## A _Choose Your Own Adventure_ moment
++
++# ## Questionnaire
++
++# It can be hard to know in pages and pages of prose what the key things are that you really need to focus on and remember. So, we've prepared a list of questions and suggested steps to complete at the end of each chapter. All the answers are in the text of the chapter, so if you're not sure about anything here, reread that part of the text and make sure you understand it. Answers to all these questions are also available on the [book's website](https://book.fast.ai). You can also visit [the forums](https://forums.fast.ai) if you get stuck to get help from other folks studying this material.
++
++# 1. Do you need these for deep learning?
++#
++#    - Lots of math T / F
++#    - Lots of data T / F
++#    - Lots of expensive computers T / F
++#    - A PhD T / F
++#    
++# 1. Name five areas where deep learning is now the best in the world.
++# 1. What was the name of the first device that was based on the principle of the artificial neuron?
++# 1. Based on the book of the same name, what are the requirements for parallel distributed processing (PDP)?
++# 1. What were the two theoretical misunderstandings that held back the field of neural networks?
++# 1. What is a GPU?
++# 1. Open a notebook and execute a cell containing: `1+1`. What happens?
++# 1. Follow through each cell of the stripped version of the notebook for this chapter. Before executing each cell, guess what will happen.
++# 1. Complete the Jupyter Notebook online appendix.
++# 1. Why is it hard to use a traditional computer program to recognize images in a photo?
++# 1. What did Samuel mean by "weight assignment"?
++# 1. What term do we normally use in deep learning for what Samuel called "weights"?
++# 1. Draw a picture that summarizes Samuel's view of a machine learning model.
++# 1. Why is it hard to understand why a deep learning model makes a particular prediction?
++# 1. What is the name of the theorem that shows that a neural network can solve any mathematical problem to any level of accuracy?
++# 1. What do you need in order to train a model?
++# 1. How could a feedback loop impact the rollout of a predictive policing model?
++# 1. Do we always have to use 224×224-pixel images with the cat recognition model?
++# 1. What is the difference between classification and regression?
++# 1. What is a validation set? What is a test set? Why do we need them?
++# 1. What will fastai do if you don't provide a validation set?
++# 1. Can we always use a random sample for a validation set? Why or why not?
++# 1. What is overfitting? Provide an example.
++# 1. What is a metric? How does it differ from "loss"?
++# 1. How can pretrained models help?
++# 1. What is the "head" of a model?
++# 1. What kinds of features do the early layers of a CNN find? How about the later layers?
++# 1. Are image models only useful for photos?
++# 1. What is an "architecture"?
++# 1. What is segmentation?
++# 1. What is `y_range` used for? When do we need it?
++# 1. What are "hyperparameters"?
++# 1. What's the best way to avoid failures when using AI in an organization?
++
++# ### Further Research
++
++# Each chapter also has a "Further Research" section that poses questions that aren't fully answered in the text, or gives more advanced assignments. Answers to these questions aren't on the book's website; you'll need to do your own research!
++
++# 1. Why is a GPU useful for deep learning? How is a CPU different, and why is it less effective for deep learning?
++# 1. Try to think of three areas where feedback loops might impact the use of machine learning. See if you can find documented examples of that happening in practice.
++
++
+diff --git a/nbs/02_production.py b/nbs/02_production.py
+new file mode 100644
+index 0000000..33939fc
+--- /dev/null
++++ ./nbs/02_production.py
+@@ -0,0 +1,264 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++from fastai.vision.widgets import *
++
++# # From Model to Production
++
++# ## The Practice of Deep Learning
++
++# ### Starting Your Project
++
++# ### The State of Deep Learning
++
++# #### Computer vision
++
++# #### Text (natural language processing)
++
++# #### Combining text and images
++
++# #### Tabular data
++
++# #### Recommendation systems
++
++# #### Other data types
++
++# ### The Drivetrain Approach
++
++# ## Gathering Data
++
++# To download images with Bing Image Search, sign up at Microsoft for a free account. You will be given a key, which you can copy and enter in a cell as follows (replacing 'XXX' with your key and executing it):
++
++key = 'XXX'
++
++search_images_bing
++
++results = search_images_bing(key, 'grizzly bear')
++ims = results.attrgot('content_url')
++len(ims)
++
++# + hide_input=true
++#hide
++ims = ['http://3.bp.blogspot.com/-S1scRCkI3vY/UHzV2kucsPI/AAAAAAAAA-k/YQ5UzHEm9Ss/s1600/Grizzly%2BBear%2BWildlife.jpg']
++# -
++
++dest = 'images/grizzly.jpg'
++download_url(ims[0], dest)
++
++im = Image.open(dest)
++im.to_thumb(128,128)
++
++bear_types = 'grizzly','black','teddy'
++path = Path('bears')
++
++if not path.exists():
++    path.mkdir()
++    for o in bear_types:
++        dest = (path/o)
++        dest.mkdir(exist_ok=True)
++        results = search_images_bing(key, f'{o} bear')
++        download_images(dest, urls=results.attrgot('content_url'))
++
++fns = get_image_files(path)
++fns
++
++failed = verify_images(fns)
++failed
++
++failed.map(Path.unlink);
++
++# ### Sidebar: Getting Help in Jupyter Notebooks
++
++# ### End sidebar
++
++# ## From Data to DataLoaders
++
++bears = DataBlock(
++    blocks=(ImageBlock, CategoryBlock), 
++    get_items=get_image_files, 
++    splitter=RandomSplitter(valid_pct=0.2, seed=42),
++    get_y=parent_label,
++    item_tfms=Resize(128))
++
++dls = bears.dataloaders(path)
++
++dls.valid.show_batch(max_n=4, nrows=1)
++
++bears = bears.new(item_tfms=Resize(128, ResizeMethod.Squish))
++dls = bears.dataloaders(path)
++dls.valid.show_batch(max_n=4, nrows=1)
++
++bears = bears.new(item_tfms=Resize(128, ResizeMethod.Pad, pad_mode='zeros'))
++dls = bears.dataloaders(path)
++dls.valid.show_batch(max_n=4, nrows=1)
++
++bears = bears.new(item_tfms=RandomResizedCrop(128, min_scale=0.3))
++dls = bears.dataloaders(path)
++dls.train.show_batch(max_n=4, nrows=1, unique=True)
++
++# ### Data Augmentation
++
++bears = bears.new(item_tfms=Resize(128), batch_tfms=aug_transforms(mult=2))
++dls = bears.dataloaders(path)
++dls.train.show_batch(max_n=8, nrows=2, unique=True)
++
++# ## Training Your Model, and Using It to Clean Your Data
++
++bears = bears.new(
++    item_tfms=RandomResizedCrop(224, min_scale=0.5),
++    batch_tfms=aug_transforms())
++dls = bears.dataloaders(path)
++
++learn = cnn_learner(dls, resnet18, metrics=error_rate)
++learn.fine_tune(4)
++
++interp = ClassificationInterpretation.from_learner(learn)
++interp.plot_confusion_matrix()
++
++interp.plot_top_losses(5, nrows=1)
++
++cleaner = ImageClassifierCleaner(learn)
++cleaner
++
++# +
++#hide
++# for idx in cleaner.delete(): cleaner.fns[idx].unlink()
++# for idx,cat in cleaner.change(): shutil.move(str(cleaner.fns[idx]), path/cat)
++# -
++
++# ## Turning Your Model into an Online Application
++
++# ### Using the Model for Inference
++
++learn.export()
++
++path = Path()
++path.ls(file_exts='.pkl')
++
++learn_inf = load_learner(path/'export.pkl')
++
++learn_inf.predict('images/grizzly.jpg')
++
++learn_inf.dls.vocab
++
++# ### Creating a Notebook App from the Model
++
++btn_upload = widgets.FileUpload()
++btn_upload
++
++# + hide_input=true
++#hide
++# For the book, we can't actually click an upload button, so we fake it
++btn_upload = SimpleNamespace(data = ['images/grizzly.jpg'])
++# -
++
++img = PILImage.create(btn_upload.data[-1])
++
++out_pl = widgets.Output()
++out_pl.clear_output()
++with out_pl: display(img.to_thumb(128,128))
++out_pl
++
++pred,pred_idx,probs = learn_inf.predict(img)
++
++lbl_pred = widgets.Label()
++lbl_pred.value = f'Prediction: {pred}; Probability: {probs[pred_idx]:.04f}'
++lbl_pred
++
++btn_run = widgets.Button(description='Classify')
++btn_run
++
++
++# +
++def on_click_classify(change):
++    img = PILImage.create(btn_upload.data[-1])
++    out_pl.clear_output()
++    with out_pl: display(img.to_thumb(128,128))
++    pred,pred_idx,probs = learn_inf.predict(img)
++    lbl_pred.value = f'Prediction: {pred}; Probability: {probs[pred_idx]:.04f}'
++
++btn_run.on_click(on_click_classify)
++# -
++
++#hide
++#Putting back btn_upload to a widget for next cell
++btn_upload = widgets.FileUpload()
++
++VBox([widgets.Label('Select your bear!'), 
++      btn_upload, btn_run, out_pl, lbl_pred])
++
++# ### Turning Your Notebook into a Real App
++
++# +
++#hide
++# # !pip install voila
++# # !jupyter serverextension enable voila —sys-prefix
++# -
++
++# ### Deploying your app
++
++# ## How to Avoid Disaster
++
++# ### Unforeseen Consequences and Feedback Loops
++
++# ## Get Writing!
++
++# ## Questionnaire
++
++# 1. Provide an example of where the bear classification model might work poorly in production, due to structural or style differences in the training data.
++# 1. Where do text models currently have a major deficiency?
++# 1. What are possible negative societal implications of text generation models?
++# 1. In situations where a model might make mistakes, and those mistakes could be harmful, what is a good alternative to automating a process?
++# 1. What kind of tabular data is deep learning particularly good at?
++# 1. What's a key downside of directly using a deep learning model for recommendation systems?
++# 1. What are the steps of the Drivetrain Approach?
++# 1. How do the steps of the Drivetrain Approach map to a recommendation system?
++# 1. Create an image recognition model using data you curate, and deploy it on the web.
++# 1. What is `DataLoaders`?
++# 1. What four things do we need to tell fastai to create `DataLoaders`?
++# 1. What does the `splitter` parameter to `DataBlock` do?
++# 1. How do we ensure a random split always gives the same validation set?
++# 1. What letters are often used to signify the independent and dependent variables?
++# 1. What's the difference between the crop, pad, and squish resize approaches? When might you choose one over the others?
++# 1. What is data augmentation? Why is it needed?
++# 1. What is the difference between `item_tfms` and `batch_tfms`?
++# 1. What is a confusion matrix?
++# 1. What does `export` save?
++# 1. What is it called when we use a model for getting predictions, instead of training?
++# 1. What are IPython widgets?
++# 1. When might you want to use CPU for deployment? When might GPU be better?
++# 1. What are the downsides of deploying your app to a server, instead of to a client (or edge) device such as a phone or PC?
++# 1. What are three examples of problems that could occur when rolling out a bear warning system in practice?
++# 1. What is "out-of-domain data"?
++# 1. What is "domain shift"?
++# 1. What are the three steps in the deployment process?
++
++# ### Further Research
++
++# 1. Consider how the Drivetrain Approach maps to a project or problem you're interested in.
++# 1. When might it be best to avoid certain types of data augmentation?
++# 1. For a project you're interested in applying deep learning to, consider the thought experiment "What would happen if it went really, really well?"
++# 1. Start a blog, and write your first blog post. For instance, write about what you think deep learning might be useful for in a domain you're interested in.
++
++
+diff --git a/nbs/03_ethics.py b/nbs/03_ethics.py
+new file mode 100644
+index 0000000..dd25ece
+--- /dev/null
++++ ./nbs/03_ethics.py
+@@ -0,0 +1,131 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# # Data Ethics
++
++# ### Sidebar: Acknowledgement: Dr. Rachel Thomas
++
++# ### End sidebar
++
++# ## Key Examples for Data Ethics
++
++# ### Bugs and Recourse: Buggy Algorithm Used for Healthcare Benefits
++
++# ### Feedback Loops: YouTube's Recommendation System
++
++# ### Bias: Professor Lantanya Sweeney "Arrested"
++
++# ### Why Does This Matter?
++
++# ## Integrating Machine Learning with Product Design
++
++# ## Topics in Data Ethics
++
++# ### Recourse and Accountability
++
++# ### Feedback Loops
++
++# ### Bias
++
++# #### Historical bias
++
++# #### Measurement bias
++
++# #### Aggregation bias
++
++# #### Representation bias
++
++# ### Addressing different types of bias
++
++# ### Disinformation
++
++# ## Identifying and Addressing Ethical Issues
++
++# ### Analyze a Project You Are Working On
++
++# ### Processes to Implement
++
++# #### Ethical lenses
++
++# ### The Power of Diversity
++
++# ### Fairness, Accountability, and Transparency
++
++# ## Role of Policy
++
++# ### The Effectiveness of Regulation
++
++# ### Rights and Policy
++
++# ### Cars: A Historical Precedent
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. Does ethics provide a list of "right answers"?
++# 1. How can working with people of different backgrounds help when considering ethical questions?
++# 1. What was the role of IBM in Nazi Germany? Why did the company participate as it did? Why did the workers participate?
++# 1. What was the role of the first person jailed in the Volkswagen diesel scandal?
++# 1. What was the problem with a database of suspected gang members maintained by California law enforcement officials?
++# 1. Why did YouTube's recommendation algorithm recommend videos of partially clothed children to pedophiles, even though no employee at Google had programmed this feature?
++# 1. What are the problems with the centrality of metrics?
++# 1. Why did Meetup.com not include gender in its recommendation system for tech meetups?
++# 1. What are the six types of bias in machine learning, according to Suresh and Guttag?
++# 1. Give two examples of historical race bias in the US.
++# 1. Where are most images in ImageNet from?
++# 1. In the paper ["Does Machine Learning Automate Moral Hazard and Error"](https://scholar.harvard.edu/files/sendhil/files/aer.p20171084.pdf) why is sinusitis found to be predictive of a stroke?
++# 1. What is representation bias?
++# 1. How are machines and people different, in terms of their use for making decisions?
++# 1. Is disinformation the same as "fake news"?
++# 1. Why is disinformation through auto-generated text a particularly significant issue?
++# 1. What are the five ethical lenses described by the Markkula Center?
++# 1. Where is policy an appropriate tool for addressing data ethics issues?
++
++# ### Further Research:
++
++# 1. Read the article "What Happens When an Algorithm Cuts Your Healthcare". How could problems like this be avoided in the future?
++# 1. Research to find out more about YouTube's recommendation system and its societal impacts. Do you think recommendation systems must always have feedback loops with negative results? What approaches could Google take to avoid them? What about the government?
++# 1. Read the paper ["Discrimination in Online Ad Delivery"](https://arxiv.org/abs/1301.6822). Do you think Google should be considered responsible for what happened to Dr. Sweeney? What would be an appropriate response?
++# 1. How can a cross-disciplinary team help avoid negative consequences?
++# 1. Read the paper "Does Machine Learning Automate Moral Hazard and Error". What actions do you think should be taken to deal with the issues identified in this paper?
++# 1. Read the article "How Will We Prevent AI-Based Forgery?" Do you think Etzioni's proposed approach could work? Why?
++# 1. Complete the section "Analyze a Project You Are Working On" in this chapter.
++# 1. Consider whether your team could be more diverse. If so, what approaches might help?
++
++# ## Deep Learning in Practice: That's a Wrap!
++
++# Congratulations! You've made it to the end of the first section of the book. In this section we've tried to show you what deep learning can do, and how you can use it to create real applications and products. At this point, you will get a lot more out of the book if you spend some time trying out what you've learned. Perhaps you have already been doing this as you go along—in which case, great! If not, that's no problem either... Now is a great time to start experimenting yourself.
++#
++# If you haven't been to the [book's website](https://book.fast.ai) yet, head over there now. It's really important that you get yourself set up to run the notebooks. Becoming an effective deep learning practitioner is all about practice, so you need to be training models. So, please go get the notebooks running now if you haven't already! And also have a look on the website for any important updates or notices; deep learning changes fast, and we can't change the words that are printed in this book, so the website is where you need to look to ensure you have the most up-to-date information.
++#
++# Make sure that you have completed the following steps:
++#
++# - Connect to one of the GPU Jupyter servers recommended on the book's website.
++# - Run the first notebook yourself.
++# - Upload an image that you find in the first notebook; then try a few different images of different kinds to see what happens.
++# - Run the second notebook, collecting your own dataset based on image search queries that you come up with.
++# - Think about how you can use deep learning to help you with your own projects, including what kinds of data you could use, what kinds of problems may come up, and how you might be able to mitigate these issues in practice.
++#
++# In the next section of the book you will learn about how and why deep learning works, instead of just seeing how you can use it in practice. Understanding the how and why is important for both practitioners and researchers, because in this fairly new field nearly every project requires some level of customization and debugging. The better you understand the foundations of deep learning, the better your models will be. These foundations are less important for executives, product managers, and so forth (although still useful, so feel free to keep reading!), but they are critical for anybody who is actually training and deploying models themselves.
++
++
+diff --git a/nbs/04_mnist_basics.py b/nbs/04_mnist_basics.py
+new file mode 100644
+index 0000000..746b7a2
+--- /dev/null
++++ ./nbs/04_mnist_basics.py
+@@ -0,0 +1,602 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++# hide
++# !pip install -Uqq fastbook
++from fastbook import *
++from fastai.vision.all import *
++import fastbook
++fastbook.setup_book()
++
++# +
++# hide
++
++matplotlib.rc('image', cmap='Greys')
++# -
++
++# # Under the Hood: Training a Digit Classifier
++
++# ## Pixels: The Foundations of Computer Vision
++
++# ## Sidebar: Tenacity and Deep Learning
++
++# ## End sidebar
++
++path = untar_data(URLs.MNIST_SAMPLE)
++
++# hide
++Path.BASE_PATH = path
++
++path.ls()
++
++(path / 'train').ls()
++
++threes = (path / 'train' / '3').ls().sorted()
++sevens = (path / 'train' / '7').ls().sorted()
++threes
++
++im3_path = threes[1]
++im3 = Image.open(im3_path)
++im3
++
++array(im3)[4:10, 4:10]
++
++tensor(im3)[4:10, 4:10]
++
++im3_t = tensor(im3)
++df = pd.DataFrame(im3_t[4:15, 4:22])
++df.style.set_properties(**{'font-size': '6pt'}).background_gradient('Greys')
++
++# ## First Try: Pixel Similarity
++
++seven_tensors = [tensor(Image.open(o)) for o in sevens]
++three_tensors = [tensor(Image.open(o)) for o in threes]
++len(three_tensors), len(seven_tensors)
++
++show_image(three_tensors[1])
++
++stacked_sevens = torch.stack(seven_tensors).float() / 255
++stacked_threes = torch.stack(three_tensors).float() / 255
++stacked_threes.shape
++
++len(stacked_threes.shape)
++
++stacked_threes.ndim
++
++mean3 = stacked_threes.mean(0)
++show_image(mean3)
++
++mean7 = stacked_sevens.mean(0)
++show_image(mean7)
++
++a_3 = stacked_threes[1]
++show_image(a_3)
++
++dist_3_abs = (a_3 - mean3).abs().mean()
++dist_3_sqr = ((a_3 - mean3)**2).mean().sqrt()
++dist_3_abs, dist_3_sqr
++
++dist_7_abs = (a_3 - mean7).abs().mean()
++dist_7_sqr = ((a_3 - mean7)**2).mean().sqrt()
++dist_7_abs, dist_7_sqr
++
++F.l1_loss(a_3.float(), mean3), F.mse_loss(a_3, mean3).sqrt()
++
++F.l1_loss(a_3.float(), mean7), F.mse_loss(a_3, mean7).sqrt()
++
++# ### NumPy Arrays and PyTorch Tensors
++
++data = [[1, 2, 3], [4, 5, 6]]
++arr = array(data)
++tns = tensor(data)
++
++arr  # numpy
++
++tns  # pytorch
++
++tns[1]
++
++tns[:, 1]
++
++tns[1, 1:3]
++
++tns + 1
++
++tns.type()
++
++tns * 1.5
++
++# ## Computing Metrics Using Broadcasting
++
++valid_3_tens = torch.stack([tensor(Image.open(o))
++                            for o in (path / 'valid' / '3').ls()])
++valid_3_tens = valid_3_tens.float() / 255
++valid_7_tens = torch.stack([tensor(Image.open(o))
++                            for o in (path / 'valid' / '7').ls()])
++valid_7_tens = valid_7_tens.float() / 255
++valid_3_tens.shape, valid_7_tens.shape
++
++
++def mnist_distance(a, b): return (a - b).abs().mean((-1, -2))
++
++
++mnist_distance(a_3, mean3)
++
++valid_3_dist = mnist_distance(valid_3_tens, mean3)
++valid_3_dist, valid_3_dist.shape
++
++tensor([1, 2, 3]) + tensor([1, 1, 1])
++
++(valid_3_tens - mean3).shape
++
++
++def is_3(x): return mnist_distance(x, mean3) < mnist_distance(x, mean7)
++
++
++is_3(a_3), is_3(a_3).float()
++
++is_3(valid_3_tens)
++
++# +
++accuracy_3s = is_3(valid_3_tens).float() .mean()
++accuracy_7s = (1 - is_3(valid_7_tens).float()).mean()
++
++accuracy_3s, accuracy_7s, (accuracy_3s + accuracy_7s) / 2
++# -
++
++# ## Stochastic Gradient Descent (SGD)
++
++# + hide_input=true
++gv('''
++init->predict->loss->gradient->step->stop
++step->predict[label=repeat]
++''')
++
++
++# -
++
++def f(x): return x**2
++
++
++plot_function(f, 'x', 'x**2')
++
++plot_function(f, 'x', 'x**2')
++plt.scatter(-1.5, f(-1.5), color='red')
++
++# ### Calculating Gradients
++
++xt = tensor(3.).requires_grad_()
++
++yt = f(xt)
++yt
++
++yt.backward()
++
++xt.grad
++
++xt = tensor([3., 4., 10.]).requires_grad_()
++xt
++
++
++# +
++def f(x): return (x**2).sum()
++
++
++yt = f(xt)
++yt
++# -
++
++yt.backward()
++xt.grad
++
++# ### Stepping With a Learning Rate
++
++# ### An End-to-End SGD Example
++
++time = torch.arange(0, 20).float()
++time
++
++speed = torch.randn(20) * 3 + 0.75 * (time - 9.5)**2 + 1
++plt.scatter(time, speed)
++
++
++def f(t, params):
++    a, b, c = params
++    return a * (t**2) + (b * t) + c
++
++
++def mse(preds, targets): return ((preds - targets)**2).mean()
++
++
++# #### Step 1: Initialize the parameters
++
++params = torch.randn(3).requires_grad_()
++
++# hide
++orig_params = params.clone()
++
++# #### Step 2: Calculate the predictions
++
++preds = f(time, params)
++
++
++def show_preds(preds, ax=None):
++    if ax is None:
++        ax = plt.subplots()[1]
++    ax.scatter(time, speed)
++    ax.scatter(time, to_np(preds), color='red')
++    ax.set_ylim(-300, 100)
++
++
++show_preds(preds)
++
++# #### Step 3: Calculate the loss
++
++loss = mse(preds, speed)
++loss
++
++# #### Step 4: Calculate the gradients
++
++loss.backward()
++params.grad
++
++params.grad * 1e-5
++
++params
++
++# #### Step 5: Step the weights.
++
++lr = 1e-5
++params.data -= lr * params.grad.data
++params.grad = None
++
++preds = f(time, params)
++mse(preds, speed)
++
++show_preds(preds)
++
++
++def apply_step(params, prn=True):
++    preds = f(time, params)
++    loss = mse(preds, speed)
++    loss.backward()
++    params.data -= lr * params.grad.data
++    params.grad = None
++    if prn:
++        print(loss.item())
++    return preds
++
++
++# #### Step 6: Repeat the process
++
++for i in range(10):
++    apply_step(params)
++
++# hide
++params = orig_params.detach().requires_grad_()
++
++_, axs = plt.subplots(1, 4, figsize=(12, 3))
++for ax in axs:
++    show_preds(apply_step(params, False), ax)
++plt.tight_layout()
++
++# #### Step 7: stop
++
++# ### Summarizing Gradient Descent
++
++# + hide_input=false
++gv('''
++init->predict->loss->gradient->step->stop
++step->predict[label=repeat]
++''')
++# -
++
++# ## The MNIST Loss Function
++
++train_x = torch.cat([stacked_threes, stacked_sevens]).view(-1, 28 * 28)
++
++train_y = tensor([1] * len(threes) + [0] * len(sevens)).unsqueeze(1)
++train_x.shape, train_y.shape
++
++dset = list(zip(train_x, train_y))
++x, y = dset[0]
++x.shape, y
++
++valid_x = torch.cat([valid_3_tens, valid_7_tens]).view(-1, 28 * 28)
++valid_y = tensor([1] * len(valid_3_tens) + [0] * len(valid_7_tens)).unsqueeze(1)
++valid_dset = list(zip(valid_x, valid_y))
++
++
++def init_params(size, std=1.0): return (torch.randn(size) * std).requires_grad_()
++
++
++weights = init_params((28 * 28, 1))
++
++bias = init_params(1)
++
++(train_x[0] * weights.T).sum() + bias
++
++
++def linear1(xb): return xb@weights + bias
++
++
++preds = linear1(train_x)
++preds
++
++corrects = (preds > 0.0).float() == train_y
++corrects
++
++corrects.float().mean().item()
++
++weights[0] *= 1.0001
++
++preds = linear1(train_x)
++((preds > 0.0).float() == train_y).float().mean().item()
++
++trgts = tensor([1, 0, 1])
++prds = tensor([0.9, 0.4, 0.2])
++
++
++def mnist_loss(predictions, targets):
++    return torch.where(targets == 1, 1 - predictions, predictions).mean()
++
++
++torch.where(trgts == 1, 1 - prds, prds)
++
++mnist_loss(prds, trgts)
++
++mnist_loss(tensor([0.9, 0.4, 0.8]), trgts)
++
++
++# ### Sigmoid
++
++def sigmoid(x): return 1 / (1 + torch.exp(-x))
++
++
++plot_function(torch.sigmoid, title='Sigmoid', min=-4, max=4)
++
++
++def mnist_loss(predictions, targets):
++    predictions = predictions.sigmoid()
++    return torch.where(targets == 1, 1 - predictions, predictions).mean()
++
++
++# ### SGD and Mini-Batches
++
++coll = range(15)
++dl = DataLoader(coll, batch_size=5, shuffle=True)
++list(dl)
++
++ds = L(enumerate(string.ascii_lowercase))
++ds
++
++dl = DataLoader(ds, batch_size=6, shuffle=True)
++list(dl)
++
++# ## Putting It All Together
++
++weights = init_params((28 * 28, 1))
++bias = init_params(1)
++
++dl = DataLoader(dset, batch_size=256)
++xb, yb = first(dl)
++xb.shape, yb.shape
++
++valid_dl = DataLoader(valid_dset, batch_size=256)
++
++batch = train_x[:4]
++batch.shape
++
++preds = linear1(batch)
++preds
++
++loss = mnist_loss(preds, train_y[:4])
++loss
++
++loss.backward()
++weights.grad.shape, weights.grad.mean(), bias.grad
++
++
++def calc_grad(xb, yb, model):
++    preds = model(xb)
++    loss = mnist_loss(preds, yb)
++    loss.backward()
++
++
++calc_grad(batch, train_y[:4], linear1)
++weights.grad.mean(), bias.grad
++
++calc_grad(batch, train_y[:4], linear1)
++weights.grad.mean(), bias.grad
++
++weights.grad.zero_()
++bias.grad.zero_()
++
++
++def train_epoch(model, lr, params):
++    for xb, yb in dl:
++        calc_grad(xb, yb, model)
++        for p in params:
++            p.data -= p.grad * lr
++            p.grad.zero_()
++
++
++(preds > 0.0).float() == train_y[:4]
++
++
++def batch_accuracy(xb, yb):
++    preds = xb.sigmoid()
++    correct = (preds > 0.5) == yb
++    return correct.float().mean()
++
++
++batch_accuracy(linear1(batch), train_y[:4])
++
++
++def validate_epoch(model):
++    accs = [batch_accuracy(model(xb), yb) for xb, yb in valid_dl]
++    return round(torch.stack(accs).mean().item(), 4)
++
++
++validate_epoch(linear1)
++
++lr = 1.
++params = weights, bias
++train_epoch(linear1, lr, params)
++validate_epoch(linear1)
++
++for i in range(20):
++    train_epoch(linear1, lr, params)
++    print(validate_epoch(linear1), end=' ')
++
++# ### Creating an Optimizer
++
++linear_model = nn.Linear(28 * 28, 1)
++
++w, b = linear_model.parameters()
++w.shape, b.shape
++
++
++class BasicOptim:
++    def __init__(self, params, lr): self.params, self.lr = list(params), lr
++
++    def step(self, *args, **kwargs):
++        for p in self.params:
++            p.data -= p.grad.data * self.lr
++
++    def zero_grad(self, *args, **kwargs):
++        for p in self.params:
++            p.grad = None
++
++
++opt = BasicOptim(linear_model.parameters(), lr)
++
++
++def train_epoch(model):
++    for xb, yb in dl:
++        calc_grad(xb, yb, model)
++        opt.step()
++        opt.zero_grad()
++
++
++validate_epoch(linear_model)
++
++
++def train_model(model, epochs):
++    for i in range(epochs):
++        train_epoch(model)
++        print(validate_epoch(model), end=' ')
++
++
++train_model(linear_model, 20)
++
++linear_model = nn.Linear(28 * 28, 1)
++opt = SGD(linear_model.parameters(), lr)
++train_model(linear_model, 20)
++
++dls = DataLoaders(dl, valid_dl)
++
++learn = Learner(dls, nn.Linear(28 * 28, 1), opt_func=SGD,
++                loss_func=mnist_loss, metrics=batch_accuracy)
++
++learn.fit(10, lr=lr)
++
++
++# ## Adding a Nonlinearity
++
++def simple_net(xb):
++    res = xb@w1 + b1
++    res = res.max(tensor(0.0))
++    res = res@w2 + b2
++    return res
++
++
++w1 = init_params((28 * 28, 30))
++b1 = init_params(30)
++w2 = init_params((30, 1))
++b2 = init_params(1)
++
++plot_function(F.relu)
++
++simple_net = nn.Sequential(
++    nn.Linear(28 * 28, 30),
++    nn.ReLU(),
++    nn.Linear(30, 1)
++)
++
++learn = Learner(dls, simple_net, opt_func=SGD,
++                loss_func=mnist_loss, metrics=batch_accuracy)
++
++learn.fit(40, 0.1)
++
++plt.plot(L(learn.recorder.values).itemgot(2))
++
++learn.recorder.values[-1][2]
++
++# ### Going Deeper
++
++dls = ImageDataLoaders.from_folder(path)
++learn = cnn_learner(dls, resnet18, pretrained=False,
++                    loss_func=F.cross_entropy, metrics=accuracy)
++learn.fit_one_cycle(1, 0.1)
++
++# ## Jargon Recap
++
++# ## Questionnaire
++
++# 1. How is a grayscale image represented on a computer? How about a color image?
++# 1. How are the files and folders in the `MNIST_SAMPLE` dataset structured? Why?
++# 1. Explain how the "pixel similarity" approach to classifying digits works.
++# 1. What is a list comprehension? Create one now that selects odd numbers from a list and doubles them.
++# 1. What is a "rank-3 tensor"?
++# 1. What is the difference between tensor rank and shape? How do you get the rank from the shape?
++# 1. What are RMSE and L1 norm?
++# 1. How can you apply a calculation on thousands of numbers at once, many thousands of times faster than a Python loop?
++# 1. Create a 3×3 tensor or array containing the numbers from 1 to 9. Double it. Select the bottom-right four numbers.
++# 1. What is broadcasting?
++# 1. Are metrics generally calculated using the training set, or the validation set? Why?
++# 1. What is SGD?
++# 1. Why does SGD use mini-batches?
++# 1. What are the seven steps in SGD for machine learning?
++# 1. How do we initialize the weights in a model?
++# 1. What is "loss"?
++# 1. Why can't we always use a high learning rate?
++# 1. What is a "gradient"?
++# 1. Do you need to know how to calculate gradients yourself?
++# 1. Why can't we use accuracy as a loss function?
++# 1. Draw the sigmoid function. What is special about its shape?
++# 1. What is the difference between a loss function and a metric?
++# 1. What is the function to calculate new weights using a learning rate?
++# 1. What does the `DataLoader` class do?
++# 1. Write pseudocode showing the basic steps taken in each epoch for SGD.
++# 1. Create a function that, if passed two arguments `[1,2,3,4]` and `'abcd'`, returns `[(1, 'a'), (2, 'b'), (3, 'c'), (4, 'd')]`. What is special about that output data structure?
++# 1. What does `view` do in PyTorch?
++# 1. What are the "bias" parameters in a neural network? Why do we need them?
++# 1. What does the `@` operator do in Python?
++# 1. What does the `backward` method do?
++# 1. Why do we have to zero the gradients?
++# 1. What information do we have to pass to `Learner`?
++# 1. Show Python or pseudocode for the basic steps of a training loop.
++# 1. What is "ReLU"? Draw a plot of it for values from `-2` to `+2`.
++# 1. What is an "activation function"?
++# 1. What's the difference between `F.relu` and `nn.ReLU`?
++# 1. The universal approximation theorem shows that any function can be approximated as closely as needed using just one nonlinearity. So why do we normally use more?
++
++# ### Further Research
++
++# 1. Create your own implementation of `Learner` from scratch, based on the training loop shown in this chapter.
++# 1. Complete all the steps in this chapter using the full MNIST datasets (that is, for all digits, not just 3s and 7s). This is a significant project and will take you quite a bit of time to complete! You'll need to do some of your own research to figure out how to overcome some obstacles you'll meet on the way.
+diff --git a/nbs/05_pet_breeds.py b/nbs/05_pet_breeds.py
+new file mode 100644
+index 0000000..d8bc2cc
+--- /dev/null
++++ ./nbs/05_pet_breeds.py
+@@ -0,0 +1,242 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # Image Classification
++
++# ## From Dogs and Cats to Pet Breeds
++
++from fastai.vision.all import *
++path = untar_data(URLs.PETS)
++
++#hide
++Path.BASE_PATH = path
++
++path.ls()
++
++(path/"images").ls()
++
++fname = (path/"images").ls()[0]
++
++re.findall(r'(.+)_\d+.jpg$', fname.name)
++
++pets = DataBlock(blocks = (ImageBlock, CategoryBlock),
++                 get_items=get_image_files, 
++                 splitter=RandomSplitter(seed=42),
++                 get_y=using_attr(RegexLabeller(r'(.+)_\d+.jpg$'), 'name'),
++                 item_tfms=Resize(460),
++                 batch_tfms=aug_transforms(size=224, min_scale=0.75))
++dls = pets.dataloaders(path/"images")
++
++# ## Presizing
++
++# + hide_input=false
++dblock1 = DataBlock(blocks=(ImageBlock(), CategoryBlock()),
++                   get_y=parent_label,
++                   item_tfms=Resize(460))
++dls1 = dblock1.dataloaders([(Path.cwd()/'images'/'grizzly.jpg')]*100, bs=8)
++dls1.train.get_idxs = lambda: Inf.ones
++x,y = dls1.valid.one_batch()
++_,axs = subplots(1, 2)
++
++x1 = TensorImage(x.clone())
++x1 = x1.affine_coord(sz=224)
++x1 = x1.rotate(draw=30, p=1.)
++x1 = x1.zoom(draw=1.2, p=1.)
++x1 = x1.warp(draw_x=-0.2, draw_y=0.2, p=1.)
++
++tfms = setup_aug_tfms([Rotate(draw=30, p=1, size=224), Zoom(draw=1.2, p=1., size=224),
++                       Warp(draw_x=-0.2, draw_y=0.2, p=1., size=224)])
++x = Pipeline(tfms)(x)
++#x.affine_coord(coord_tfm=coord_tfm, sz=size, mode=mode, pad_mode=pad_mode)
++TensorImage(x[0]).show(ctx=axs[0])
++TensorImage(x1[0]).show(ctx=axs[1]);
++# -
++
++# ### Checking and Debugging a DataBlock
++
++dls.show_batch(nrows=1, ncols=3)
++
++pets1 = DataBlock(blocks = (ImageBlock, CategoryBlock),
++                 get_items=get_image_files, 
++                 splitter=RandomSplitter(seed=42),
++                 get_y=using_attr(RegexLabeller(r'(.+)_\d+.jpg$'), 'name'))
++pets1.summary(path/"images")
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fine_tune(2)
++
++# ## Cross-Entropy Loss
++
++# ### Viewing Activations and Labels
++
++x,y = dls.one_batch()
++
++y
++
++preds,_ = learn.get_preds(dl=[(x,y)])
++preds[0]
++
++len(preds[0]),preds[0].sum()
++
++# ### Softmax
++
++plot_function(torch.sigmoid, min=-4,max=4)
++
++#hide
++torch.random.manual_seed(42);
++
++acts = torch.randn((6,2))*2
++acts
++
++acts.sigmoid()
++
++(acts[:,0]-acts[:,1]).sigmoid()
++
++sm_acts = torch.softmax(acts, dim=1)
++sm_acts
++
++# ### Log Likelihood
++
++targ = tensor([0,1,0,1,1,0])
++
++sm_acts
++
++idx = range(6)
++sm_acts[idx, targ]
++
++from IPython.display import HTML
++df = pd.DataFrame(sm_acts, columns=["3","7"])
++df['targ'] = targ
++df['idx'] = idx
++df['loss'] = sm_acts[range(6), targ]
++t = df.style.hide_index()
++#To have html code compatible with our script
++html = t._repr_html_().split('</style>')[1]
++html = re.sub(r'<table id="([^"]+)"\s*>', r'<table >', html)
++display(HTML(html))
++
++-sm_acts[idx, targ]
++
++F.nll_loss(sm_acts, targ, reduction='none')
++
++# ### Taking the Log
++
++plot_function(torch.log, min=0,max=4)
++
++loss_func = nn.CrossEntropyLoss()
++
++loss_func(acts, targ)
++
++F.cross_entropy(acts, targ)
++
++nn.CrossEntropyLoss(reduction='none')(acts, targ)
++
++# ## Model Interpretation
++
++interp = ClassificationInterpretation.from_learner(learn)
++interp.plot_confusion_matrix(figsize=(12,12), dpi=60)
++
++interp.most_confused(min_val=5)
++
++# ## Improving Our Model
++
++# ### The Learning Rate Finder
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fine_tune(1, base_lr=0.1)
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++lr_min,lr_steep = learn.lr_find()
++
++print(f"Minimum/10: {lr_min:.2e}, steepest point: {lr_steep:.2e}")
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fine_tune(2, base_lr=3e-3)
++
++# ### Unfreezing and Transfer Learning
++
++# +
++# learn.fine_tune??
++# -
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fit_one_cycle(3, 3e-3)
++
++learn.unfreeze()
++
++learn.lr_find()
++
++learn.fit_one_cycle(6, lr_max=1e-5)
++
++# ### Discriminative Learning Rates
++
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fit_one_cycle(3, 3e-3)
++learn.unfreeze()
++learn.fit_one_cycle(12, lr_max=slice(1e-6,1e-4))
++
++learn.recorder.plot_loss()
++
++# ### Selecting the Number of Epochs
++
++# ### Deeper Architectures
++
++from fastai.callback.fp16 import *
++learn = cnn_learner(dls, resnet50, metrics=error_rate).to_fp16()
++learn.fine_tune(6, freeze_epochs=3)
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. Why do we first resize to a large size on the CPU, and then to a smaller size on the GPU?
++# 1. If you are not familiar with regular expressions, find a regular expression tutorial, and some problem sets, and complete them. Have a look on the book's website for suggestions.
++# 1. What are the two ways in which data is most commonly provided, for most deep learning datasets?
++# 1. Look up the documentation for `L` and try using a few of the new methods is that it adds.
++# 1. Look up the documentation for the Python `pathlib` module and try using a few methods of the `Path` class.
++# 1. Give two examples of ways that image transformations can degrade the quality of the data.
++# 1. What method does fastai provide to view the data in a `DataLoaders`?
++# 1. What method does fastai provide to help you debug a `DataBlock`?
++# 1. Should you hold off on training a model until you have thoroughly cleaned your data?
++# 1. What are the two pieces that are combined into cross-entropy loss in PyTorch?
++# 1. What are the two properties of activations that softmax ensures? Why is this important?
++# 1. When might you want your activations to not have these two properties?
++# 1. Calculate the `exp` and `softmax` columns of <<bear_softmax>> yourself (i.e., in a spreadsheet, with a calculator, or in a notebook).
++# 1. Why can't we use `torch.where` to create a loss function for datasets where our label can have more than two categories?
++# 1. What is the value of log(-2)? Why?
++# 1. What are two good rules of thumb for picking a learning rate from the learning rate finder?
++# 1. What two steps does the `fine_tune` method do?
++# 1. In Jupyter Notebook, how do you get the source code for a method or function?
++# 1. What are discriminative learning rates?
++# 1. How is a Python `slice` object interpreted when passed as a learning rate to fastai?
++# 1. Why is early stopping a poor choice when using 1cycle training?
++# 1. What is the difference between `resnet50` and `resnet101`?
++# 1. What does `to_fp16` do?
++
++# ### Further Research
++
++# 1. Find the paper by Leslie Smith that introduced the learning rate finder, and read it.
++# 1. See if you can improve the accuracy of the classifier in this chapter. What's the best accuracy you can achieve? Look on the forums and the book's website to see what other students have achieved with this dataset, and how they did it.
++
++
+diff --git a/nbs/06_multicat.py b/nbs/06_multicat.py
+new file mode 100644
+index 0000000..1580779
+--- /dev/null
++++ ./nbs/06_multicat.py
+@@ -0,0 +1,261 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # Other Computer Vision Problems
++
++# ## Multi-Label Classification
++
++# ### The Data
++
++from fastai.vision.all import *
++path = untar_data(URLs.PASCAL_2007)
++
++df = pd.read_csv(path/'train.csv')
++df.head()
++
++# ### Sidebar: Pandas and DataFrames
++
++df.iloc[:,0]
++
++df.iloc[0,:]
++# Trailing :s are always optional (in numpy, pytorch, pandas, etc.),
++#   so this is equivalent:
++df.iloc[0]
++
++df['fname']
++
++tmp_df = pd.DataFrame({'a':[1,2], 'b':[3,4]})
++tmp_df
++
++tmp_df['c'] = tmp_df['a']+tmp_df['b']
++tmp_df
++
++# ### End sidebar
++
++# ### Constructing a DataBlock
++
++dblock = DataBlock()
++
++dsets = dblock.datasets(df)
++
++len(dsets.train),len(dsets.valid)
++
++x,y = dsets.train[0]
++x,y
++
++x['fname']
++
++dblock = DataBlock(get_x = lambda r: r['fname'], get_y = lambda r: r['labels'])
++dsets = dblock.datasets(df)
++dsets.train[0]
++
++
++def get_x(r): return r['fname']
++def get_y(r): return r['labels']
++dblock = DataBlock(get_x = get_x, get_y = get_y)
++dsets = dblock.datasets(df)
++dsets.train[0]
++
++
++def get_x(r): return path/'train'/r['fname']
++def get_y(r): return r['labels'].split(' ')
++dblock = DataBlock(get_x = get_x, get_y = get_y)
++dsets = dblock.datasets(df)
++dsets.train[0]
++
++dblock = DataBlock(blocks=(ImageBlock, MultiCategoryBlock),
++                   get_x = get_x, get_y = get_y)
++dsets = dblock.datasets(df)
++dsets.train[0]
++
++idxs = torch.where(dsets.train[0][1]==1.)[0]
++dsets.train.vocab[idxs]
++
++
++# +
++def splitter(df):
++    train = df.index[~df['is_valid']].tolist()
++    valid = df.index[df['is_valid']].tolist()
++    return train,valid
++
++dblock = DataBlock(blocks=(ImageBlock, MultiCategoryBlock),
++                   splitter=splitter,
++                   get_x=get_x, 
++                   get_y=get_y)
++
++dsets = dblock.datasets(df)
++dsets.train[0]
++# -
++
++dblock = DataBlock(blocks=(ImageBlock, MultiCategoryBlock),
++                   splitter=splitter,
++                   get_x=get_x, 
++                   get_y=get_y,
++                   item_tfms = RandomResizedCrop(128, min_scale=0.35))
++dls = dblock.dataloaders(df)
++
++dls.show_batch(nrows=1, ncols=3)
++
++# ### Binary Cross-Entropy
++
++learn = cnn_learner(dls, resnet18)
++
++x,y = dls.train.one_batch()
++activs = learn.model(x)
++activs.shape
++
++activs[0]
++
++
++def binary_cross_entropy(inputs, targets):
++    inputs = inputs.sigmoid()
++    return -torch.where(targets==1, inputs, 1-inputs).log().mean()
++
++
++loss_func = nn.BCEWithLogitsLoss()
++loss = loss_func(activs, y)
++loss
++
++
++def say_hello(name, say_what="Hello"): return f"{say_what} {name}."
++say_hello('Jeremy'),say_hello('Jeremy', 'Ahoy!')
++
++f = partial(say_hello, say_what="Bonjour")
++f("Jeremy"),f("Sylvain")
++
++learn = cnn_learner(dls, resnet50, metrics=partial(accuracy_multi, thresh=0.2))
++learn.fine_tune(3, base_lr=3e-3, freeze_epochs=4)
++
++learn.metrics = partial(accuracy_multi, thresh=0.1)
++learn.validate()
++
++learn.metrics = partial(accuracy_multi, thresh=0.99)
++learn.validate()
++
++preds,targs = learn.get_preds()
++
++accuracy_multi(preds, targs, thresh=0.9, sigmoid=False)
++
++xs = torch.linspace(0.05,0.95,29)
++accs = [accuracy_multi(preds, targs, thresh=i, sigmoid=False) for i in xs]
++plt.plot(xs,accs);
++
++# ## Regression
++
++# ### Assemble the Data
++
++path = untar_data(URLs.BIWI_HEAD_POSE)
++
++#hide
++Path.BASE_PATH = path
++
++path.ls().sorted()
++
++(path/'01').ls().sorted()
++
++img_files = get_image_files(path)
++def img2pose(x): return Path(f'{str(x)[:-7]}pose.txt')
++img2pose(img_files[0])
++
++im = PILImage.create(img_files[0])
++im.shape
++
++im.to_thumb(160)
++
++cal = np.genfromtxt(path/'01'/'rgb.cal', skip_footer=6)
++def get_ctr(f):
++    ctr = np.genfromtxt(img2pose(f), skip_header=3)
++    c1 = ctr[0] * cal[0][0]/ctr[2] + cal[0][2]
++    c2 = ctr[1] * cal[1][1]/ctr[2] + cal[1][2]
++    return tensor([c1,c2])
++
++
++get_ctr(img_files[0])
++
++biwi = DataBlock(
++    blocks=(ImageBlock, PointBlock),
++    get_items=get_image_files,
++    get_y=get_ctr,
++    splitter=FuncSplitter(lambda o: o.parent.name=='13'),
++    batch_tfms=[*aug_transforms(size=(240,320)), 
++                Normalize.from_stats(*imagenet_stats)]
++)
++
++dls = biwi.dataloaders(path)
++dls.show_batch(max_n=9, figsize=(8,6))
++
++xb,yb = dls.one_batch()
++xb.shape,yb.shape
++
++yb[0]
++
++# ### Training a Model
++
++learn = cnn_learner(dls, resnet18, y_range=(-1,1))
++
++
++def sigmoid_range(x, lo, hi): return torch.sigmoid(x) * (hi-lo) + lo
++
++
++plot_function(partial(sigmoid_range,lo=-1,hi=1), min=-4, max=4)
++
++dls.loss_func
++
++learn.lr_find()
++
++lr = 1e-2
++learn.fine_tune(3, lr)
++
++math.sqrt(0.0001)
++
++learn.show_results(ds_idx=1, max_n=3, figsize=(6,8))
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. How could multi-label classification improve the usability of the bear classifier?
++# 1. How do we encode the dependent variable in a multi-label classification problem?
++# 1. How do you access the rows and columns of a DataFrame as if it was a matrix?
++# 1. How do you get a column by name from a DataFrame?
++# 1. What is the difference between a `Dataset` and `DataLoader`?
++# 1. What does a `Datasets` object normally contain?
++# 1. What does a `DataLoaders` object normally contain?
++# 1. What does `lambda` do in Python?
++# 1. What are the methods to customize how the independent and dependent variables are created with the data block API?
++# 1. Why is softmax not an appropriate output activation function when using a one hot encoded target?
++# 1. Why is `nll_loss` not an appropriate loss function when using a one-hot-encoded target?
++# 1. What is the difference between `nn.BCELoss` and `nn.BCEWithLogitsLoss`?
++# 1. Why can't we use regular accuracy in a multi-label problem?
++# 1. When is it okay to tune a hyperparameter on the validation set?
++# 1. How is `y_range` implemented in fastai? (See if you can implement it yourself and test it without peeking!)
++# 1. What is a regression problem? What loss function should you use for such a problem?
++# 1. What do you need to do to make sure the fastai library applies the same data augmentation to your inputs images and your target point coordinates?
++
++# ### Further Research
++
++# 1. Read a tutorial about Pandas DataFrames and experiment with a few methods that look interesting to you. See the book's website for recommended tutorials.
++# 1. Retrain the bear classifier using multi-label classification. See if you can make it work effectively with images that don't contain any bears, including showing that information in the web application. Try an image with two different kinds of bears. Check whether the accuracy on the single-label dataset is impacted using multi-label classification.
++
++
+diff --git a/nbs/07_sizing_and_tta.py b/nbs/07_sizing_and_tta.py
+new file mode 100644
+index 0000000..1fd32c7
+--- /dev/null
++++ ./nbs/07_sizing_and_tta.py
+@@ -0,0 +1,135 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # Training a State-of-the-Art Model
++
++# ## Imagenette
++
++from fastai.vision.all import *
++path = untar_data(URLs.IMAGENETTE)
++
++dblock = DataBlock(blocks=(ImageBlock(), CategoryBlock()),
++                   get_items=get_image_files,
++                   get_y=parent_label,
++                   item_tfms=Resize(460),
++                   batch_tfms=aug_transforms(size=224, min_scale=0.75))
++dls = dblock.dataloaders(path, bs=64)
++
++model = xresnet50()
++learn = Learner(dls, model, loss_func=CrossEntropyLossFlat(), metrics=accuracy)
++learn.fit_one_cycle(5, 3e-3)
++
++# ## Normalization
++
++x,y = dls.one_batch()
++x.mean(dim=[0,2,3]),x.std(dim=[0,2,3])
++
++
++def get_dls(bs, size):
++    dblock = DataBlock(blocks=(ImageBlock, CategoryBlock),
++                   get_items=get_image_files,
++                   get_y=parent_label,
++                   item_tfms=Resize(460),
++                   batch_tfms=[*aug_transforms(size=size, min_scale=0.75),
++                               Normalize.from_stats(*imagenet_stats)])
++    return dblock.dataloaders(path, bs=bs)
++
++
++dls = get_dls(64, 224)
++
++x,y = dls.one_batch()
++x.mean(dim=[0,2,3]),x.std(dim=[0,2,3])
++
++model = xresnet50()
++learn = Learner(dls, model, loss_func=CrossEntropyLossFlat(), metrics=accuracy)
++learn.fit_one_cycle(5, 3e-3)
++
++# ## Progressive Resizing
++
++dls = get_dls(128, 128)
++learn = Learner(dls, xresnet50(), loss_func=CrossEntropyLossFlat(), 
++                metrics=accuracy)
++learn.fit_one_cycle(4, 3e-3)
++
++learn.dls = get_dls(64, 224)
++learn.fine_tune(5, 1e-3)
++
++# ## Test Time Augmentation
++
++preds,targs = learn.tta()
++accuracy(preds, targs).item()
++
++# ## Mixup
++
++# ### Sidebar: Papers and Math
++
++# ### End sidebar
++
++# + hide_input=true
++church = PILImage.create(get_image_files_sorted(path/'train'/'n03028079')[0])
++gas = PILImage.create(get_image_files_sorted(path/'train'/'n03425413')[0])
++church = church.resize((256,256))
++gas = gas.resize((256,256))
++tchurch = tensor(church).float() / 255.
++tgas = tensor(gas).float() / 255.
++
++_,axs = plt.subplots(1, 3, figsize=(12,4))
++show_image(tchurch, ax=axs[0]);
++show_image(tgas, ax=axs[1]);
++show_image((0.3*tchurch + 0.7*tgas), ax=axs[2]);
++# -
++
++# ## Label Smoothing
++
++# ### Sidebar: Label Smoothing, the Paper
++
++# ### End sidebar
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. What is the difference between ImageNet and Imagenette? When is it better to experiment on one versus the other?
++# 1. What is normalization?
++# 1. Why didn't we have to care about normalization when using a pretrained model?
++# 1. What is progressive resizing?
++# 1. Implement progressive resizing in your own project. Did it help?
++# 1. What is test time augmentation? How do you use it in fastai?
++# 1. Is using TTA at inference slower or faster than regular inference? Why?
++# 1. What is Mixup? How do you use it in fastai?
++# 1. Why does Mixup prevent the model from being too confident?
++# 1. Why does training with Mixup for five epochs end up worse than training without Mixup?
++# 1. What is the idea behind label smoothing?
++# 1. What problems in your data can label smoothing help with?
++# 1. When using label smoothing with five categories, what is the target associated with the index 1?
++# 1. What is the first step to take when you want to prototype quick experiments on a new dataset?
++
++# ### Further Research
++#
++# 1. Use the fastai documentation to build a function that crops an image to a square in each of the four corners, then implement a TTA method that averages the predictions on a center crop and those four crops. Did it help? Is it better than the TTA method of fastai?
++# 1. Find the Mixup paper on arXiv and read it. Pick one or two more recent articles introducing variants of Mixup and read them, then try to implement them on your problem.
++# 1. Find the script training Imagenette using Mixup and use it as an example to build a script for a long training on your own project. Execute it and see if it helps.
++# 1. Read the sidebar "Label Smoothing, the Paper", look at the relevant section of the original paper and see if you can follow it. Don't be afraid to ask for help!
++
++
+diff --git a/nbs/08_collab.py b/nbs/08_collab.py
+new file mode 100644
+index 0000000..70b572f
+--- /dev/null
++++ ./nbs/08_collab.py
+@@ -0,0 +1,348 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # Collaborative Filtering Deep Dive
++
++# ## A First Look at the Data
++
++from fastai.collab import *
++from fastai.tabular.all import *
++path = untar_data(URLs.ML_100k)
++
++ratings = pd.read_csv(path/'u.data', delimiter='\t', header=None,
++                      names=['user','movie','rating','timestamp'])
++ratings.head()
++
++last_skywalker = np.array([0.98,0.9,-0.9])
++
++user1 = np.array([0.9,0.8,-0.6])
++
++(user1*last_skywalker).sum()
++
++casablanca = np.array([-0.99,-0.3,0.8])
++
++(user1*casablanca).sum()
++
++# ## Learning the Latent Factors
++
++# ## Creating the DataLoaders
++
++movies = pd.read_csv(path/'u.item',  delimiter='|', encoding='latin-1',
++                     usecols=(0,1), names=('movie','title'), header=None)
++movies.head()
++
++ratings = ratings.merge(movies)
++ratings.head()
++
++dls = CollabDataLoaders.from_df(ratings, item_name='title', bs=64)
++dls.show_batch()
++
++dls.classes
++
++# +
++n_users  = len(dls.classes['user'])
++n_movies = len(dls.classes['title'])
++n_factors = 5
++
++user_factors = torch.randn(n_users, n_factors)
++movie_factors = torch.randn(n_movies, n_factors)
++# -
++
++one_hot_3 = one_hot(3, n_users).float()
++
++user_factors.t() @ one_hot_3
++
++user_factors[3]
++
++
++# ## Collaborative Filtering from Scratch
++
++class Example:
++    def __init__(self, a): self.a = a
++    def say(self,x): return f'Hello {self.a}, {x}.'
++
++
++ex = Example('Sylvain')
++ex.say('nice to meet you')
++
++
++class DotProduct(Module):
++    def __init__(self, n_users, n_movies, n_factors):
++        self.user_factors = Embedding(n_users, n_factors)
++        self.movie_factors = Embedding(n_movies, n_factors)
++        
++    def forward(self, x):
++        users = self.user_factors(x[:,0])
++        movies = self.movie_factors(x[:,1])
++        return (users * movies).sum(dim=1)
++
++
++x,y = dls.one_batch()
++x.shape
++
++model = DotProduct(n_users, n_movies, 50)
++learn = Learner(dls, model, loss_func=MSELossFlat())
++
++learn.fit_one_cycle(5, 5e-3)
++
++
++class DotProduct(Module):
++    def __init__(self, n_users, n_movies, n_factors, y_range=(0,5.5)):
++        self.user_factors = Embedding(n_users, n_factors)
++        self.movie_factors = Embedding(n_movies, n_factors)
++        self.y_range = y_range
++        
++    def forward(self, x):
++        users = self.user_factors(x[:,0])
++        movies = self.movie_factors(x[:,1])
++        return sigmoid_range((users * movies).sum(dim=1), *self.y_range)
++
++
++model = DotProduct(n_users, n_movies, 50)
++learn = Learner(dls, model, loss_func=MSELossFlat())
++learn.fit_one_cycle(5, 5e-3)
++
++
++class DotProductBias(Module):
++    def __init__(self, n_users, n_movies, n_factors, y_range=(0,5.5)):
++        self.user_factors = Embedding(n_users, n_factors)
++        self.user_bias = Embedding(n_users, 1)
++        self.movie_factors = Embedding(n_movies, n_factors)
++        self.movie_bias = Embedding(n_movies, 1)
++        self.y_range = y_range
++        
++    def forward(self, x):
++        users = self.user_factors(x[:,0])
++        movies = self.movie_factors(x[:,1])
++        res = (users * movies).sum(dim=1, keepdim=True)
++        res += self.user_bias(x[:,0]) + self.movie_bias(x[:,1])
++        return sigmoid_range(res, *self.y_range)
++
++
++model = DotProductBias(n_users, n_movies, 50)
++learn = Learner(dls, model, loss_func=MSELossFlat())
++learn.fit_one_cycle(5, 5e-3)
++
++# ### Weight Decay
++
++# + hide_input=true
++x = np.linspace(-2,2,100)
++a_s = [1,2,5,10,50] 
++ys = [a * x**2 for a in a_s]
++_,ax = plt.subplots(figsize=(8,6))
++for a,y in zip(a_s,ys): ax.plot(x,y, label=f'a={a}')
++ax.set_ylim([0,5])
++ax.legend();
++# -
++
++model = DotProductBias(n_users, n_movies, 50)
++learn = Learner(dls, model, loss_func=MSELossFlat())
++learn.fit_one_cycle(5, 5e-3, wd=0.1)
++
++
++# ### Creating Our Own Embedding Module
++
++# +
++class T(Module):
++    def __init__(self): self.a = torch.ones(3)
++
++L(T().parameters())
++
++
++# +
++class T(Module):
++    def __init__(self): self.a = nn.Parameter(torch.ones(3))
++
++L(T().parameters())
++
++
++# +
++class T(Module):
++    def __init__(self): self.a = nn.Linear(1, 3, bias=False)
++
++t = T()
++L(t.parameters())
++# -
++
++type(t.a.weight)
++
++
++def create_params(size):
++    return nn.Parameter(torch.zeros(*size).normal_(0, 0.01))
++
++
++class DotProductBias(Module):
++    def __init__(self, n_users, n_movies, n_factors, y_range=(0,5.5)):
++        self.user_factors = create_params([n_users, n_factors])
++        self.user_bias = create_params([n_users])
++        self.movie_factors = create_params([n_movies, n_factors])
++        self.movie_bias = create_params([n_movies])
++        self.y_range = y_range
++        
++    def forward(self, x):
++        users = self.user_factors[x[:,0]]
++        movies = self.movie_factors[x[:,1]]
++        res = (users*movies).sum(dim=1)
++        res += self.user_bias[x[:,0]] + self.movie_bias[x[:,1]]
++        return sigmoid_range(res, *self.y_range)
++
++
++model = DotProductBias(n_users, n_movies, 50)
++learn = Learner(dls, model, loss_func=MSELossFlat())
++learn.fit_one_cycle(5, 5e-3, wd=0.1)
++
++# ## Interpreting Embeddings and Biases
++
++movie_bias = learn.model.movie_bias.squeeze()
++idxs = movie_bias.argsort()[:5]
++[dls.classes['title'][i] for i in idxs]
++
++idxs = movie_bias.argsort(descending=True)[:5]
++[dls.classes['title'][i] for i in idxs]
++
++# + hide_input=true
++g = ratings.groupby('title')['rating'].count()
++top_movies = g.sort_values(ascending=False).index.values[:1000]
++top_idxs = tensor([learn.dls.classes['title'].o2i[m] for m in top_movies])
++movie_w = learn.model.movie_factors[top_idxs].cpu().detach()
++movie_pca = movie_w.pca(3)
++fac0,fac1,fac2 = movie_pca.t()
++idxs = np.random.choice(len(top_movies), 50, replace=False)
++idxs = list(range(50))
++X = fac0[idxs]
++Y = fac2[idxs]
++plt.figure(figsize=(12,12))
++plt.scatter(X, Y)
++for i, x, y in zip(top_movies[idxs], X, Y):
++    plt.text(x,y,i, color=np.random.rand(3)*0.7, fontsize=11)
++plt.show()
++# -
++
++# ### Using fastai.collab
++
++learn = collab_learner(dls, n_factors=50, y_range=(0, 5.5))
++
++learn.fit_one_cycle(5, 5e-3, wd=0.1)
++
++learn.model
++
++movie_bias = learn.model.i_bias.weight.squeeze()
++idxs = movie_bias.argsort(descending=True)[:5]
++[dls.classes['title'][i] for i in idxs]
++
++# ### Embedding Distance
++
++movie_factors = learn.model.i_weight.weight
++idx = dls.classes['title'].o2i['Silence of the Lambs, The (1991)']
++distances = nn.CosineSimilarity(dim=1)(movie_factors, movie_factors[idx][None])
++idx = distances.argsort(descending=True)[1]
++dls.classes['title'][idx]
++
++# ## Bootstrapping a Collaborative Filtering Model
++
++# ## Deep Learning for Collaborative Filtering
++
++embs = get_emb_sz(dls)
++embs
++
++
++class CollabNN(Module):
++    def __init__(self, user_sz, item_sz, y_range=(0,5.5), n_act=100):
++        self.user_factors = Embedding(*user_sz)
++        self.item_factors = Embedding(*item_sz)
++        self.layers = nn.Sequential(
++            nn.Linear(user_sz[1]+item_sz[1], n_act),
++            nn.ReLU(),
++            nn.Linear(n_act, 1))
++        self.y_range = y_range
++        
++    def forward(self, x):
++        embs = self.user_factors(x[:,0]),self.item_factors(x[:,1])
++        x = self.layers(torch.cat(embs, dim=1))
++        return sigmoid_range(x, *self.y_range)
++
++
++model = CollabNN(*embs)
++
++learn = Learner(dls, model, loss_func=MSELossFlat())
++learn.fit_one_cycle(5, 5e-3, wd=0.01)
++
++learn = collab_learner(dls, use_nn=True, y_range=(0, 5.5), layers=[100,50])
++learn.fit_one_cycle(5, 5e-3, wd=0.1)
++
++
++@delegates(TabularModel)
++class EmbeddingNN(TabularModel):
++    def __init__(self, emb_szs, layers, **kwargs):
++        super().__init__(emb_szs, layers=layers, n_cont=0, out_sz=1, **kwargs)
++
++# ### Sidebar: kwargs and Delegates
++
++# ### End sidebar
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. What problem does collaborative filtering solve?
++# 1. How does it solve it?
++# 1. Why might a collaborative filtering predictive model fail to be a very useful recommendation system?
++# 1. What does a crosstab representation of collaborative filtering data look like?
++# 1. Write the code to create a crosstab representation of the MovieLens data (you might need to do some web searching!).
++# 1. What is a latent factor? Why is it "latent"?
++# 1. What is a dot product? Calculate a dot product manually using pure Python with lists.
++# 1. What does `pandas.DataFrame.merge` do?
++# 1. What is an embedding matrix?
++# 1. What is the relationship between an embedding and a matrix of one-hot-encoded vectors?
++# 1. Why do we need `Embedding` if we could use one-hot-encoded vectors for the same thing?
++# 1. What does an embedding contain before we start training (assuming we're not using a pretained model)?
++# 1. Create a class (without peeking, if possible!) and use it.
++# 1. What does `x[:,0]` return?
++# 1. Rewrite the `DotProduct` class (without peeking, if possible!) and train a model with it.
++# 1. What is a good loss function to use for MovieLens? Why? 
++# 1. What would happen if we used cross-entropy loss with MovieLens? How would we need to change the model?
++# 1. What is the use of bias in a dot product model?
++# 1. What is another name for weight decay?
++# 1. Write the equation for weight decay (without peeking!).
++# 1. Write the equation for the gradient of weight decay. Why does it help reduce weights?
++# 1. Why does reducing weights lead to better generalization?
++# 1. What does `argsort` do in PyTorch?
++# 1. Does sorting the movie biases give the same result as averaging overall movie ratings by movie? Why/why not?
++# 1. How do you print the names and details of the layers in a model?
++# 1. What is the "bootstrapping problem" in collaborative filtering?
++# 1. How could you deal with the bootstrapping problem for new users? For new movies?
++# 1. How can feedback loops impact collaborative filtering systems?
++# 1. When using a neural network in collaborative filtering, why can we have different numbers of factors for movies and users?
++# 1. Why is there an `nn.Sequential` in the `CollabNN` model?
++# 1. What kind of model should we use if we want to add metadata about users and items, or information such as date and time, to a collaborative filtering model?
++
++# ### Further Research
++#
++# 1. Take a look at all the differences between the `Embedding` version of `DotProductBias` and the `create_params` version, and try to understand why each of those changes is required. If you're not sure, try reverting each change to see what happens. (NB: even the type of brackets used in `forward` has changed!)
++# 1. Find three other areas where collaborative filtering is being used, and find out what the pros and cons of this approach are in those areas.
++# 1. Complete this notebook using the full MovieLens dataset, and compare your results to online benchmarks. See if you can improve your accuracy. Look on the book's website and the fast.ai forum for ideas. Note that there are more columns in the full dataset—see if you can use those too (the next chapter might give you ideas).
++# 1. Create a model for MovieLens that works with cross-entropy loss, and compare it to the model in this chapter.
++
++
+diff --git a/nbs/09_tabular.py b/nbs/09_tabular.py
+new file mode 100644
+index 0000000..9c07845
+--- /dev/null
++++ ./nbs/09_tabular.py
+@@ -0,0 +1,494 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# + hide_input=false
++#hide
++from fastbook import *
++from kaggle import api
++from pandas.api.types import is_string_dtype, is_numeric_dtype, is_categorical_dtype
++from fastai.tabular.all import *
++from sklearn.ensemble import RandomForestRegressor
++from sklearn.tree import DecisionTreeRegressor
++from dtreeviz.trees import *
++from IPython.display import Image, display_svg, SVG
++
++pd.options.display.max_rows = 20
++pd.options.display.max_columns = 8
++# -
++
++# # Tabular Modeling Deep Dive
++
++# ## Categorical Embeddings
++
++# ## Beyond Deep Learning
++
++# ## The Dataset
++
++# ### Kaggle Competitions
++
++creds = ''
++
++cred_path = Path('~/.kaggle/kaggle.json').expanduser()
++if not cred_path.exists():
++    cred_path.parent.mkdir(exist_ok=True)
++    cred_path.write(creds)
++    cred_path.chmod(0o600)
++
++path = URLs.path('bluebook')
++path
++
++#hide
++Path.BASE_PATH = path
++
++# +
++if not path.exists():
++    path.mkdir()
++    api.competition_download_cli('bluebook-for-bulldozers', path=path)
++    file_extract(path/'bluebook-for-bulldozers.zip')
++
++path.ls(file_type='text')
++# -
++
++# ### Look at the Data
++
++df = pd.read_csv(path/'TrainAndValid.csv', low_memory=False)
++
++df.columns
++
++df['ProductSize'].unique()
++
++sizes = 'Large','Large / Medium','Medium','Small','Mini','Compact'
++
++df['ProductSize'] = df['ProductSize'].astype('category')
++df['ProductSize'].cat.set_categories(sizes, ordered=True, inplace=True)
++
++dep_var = 'SalePrice'
++
++df[dep_var] = np.log(df[dep_var])
++
++# ## Decision Trees
++
++# ### Handling Dates
++
++df = add_datepart(df, 'saledate')
++
++df_test = pd.read_csv(path/'Test.csv', low_memory=False)
++df_test = add_datepart(df_test, 'saledate')
++
++' '.join(o for o in df.columns if o.startswith('sale'))
++
++# ### Using TabularPandas and TabularProc
++
++procs = [Categorify, FillMissing]
++
++# +
++cond = (df.saleYear<2011) | (df.saleMonth<10)
++train_idx = np.where( cond)[0]
++valid_idx = np.where(~cond)[0]
++
++splits = (list(train_idx),list(valid_idx))
++# -
++
++cont,cat = cont_cat_split(df, 1, dep_var=dep_var)
++
++to = TabularPandas(df, procs, cat, cont, y_names=dep_var, splits=splits)
++
++len(to.train),len(to.valid)
++
++to.show(3)
++
++to1 = TabularPandas(df, procs, ['state', 'ProductGroup', 'Drive_System', 'Enclosure'], [], y_names=dep_var, splits=splits)
++to1.show(3)
++
++to.items.head(3)
++
++to1.items[['state', 'ProductGroup', 'Drive_System', 'Enclosure']].head(3)
++
++to.classes['ProductSize']
++
++(path/'to.pkl').save(to)
++
++# ### Creating the Decision Tree
++
++#hide
++to = (path/'to.pkl').load()
++
++xs,y = to.train.xs,to.train.y
++valid_xs,valid_y = to.valid.xs,to.valid.y
++
++m = DecisionTreeRegressor(max_leaf_nodes=4)
++m.fit(xs, y);
++
++draw_tree(m, xs, size=7, leaves_parallel=True, precision=2)
++
++samp_idx = np.random.permutation(len(y))[:500]
++dtreeviz(m, xs.iloc[samp_idx], y.iloc[samp_idx], xs.columns, dep_var,
++        fontname='DejaVu Sans', scale=1.6, label_fontsize=10,
++        orientation='LR')
++
++xs.loc[xs['YearMade']<1900, 'YearMade'] = 1950
++valid_xs.loc[valid_xs['YearMade']<1900, 'YearMade'] = 1950
++
++# +
++m = DecisionTreeRegressor(max_leaf_nodes=4).fit(xs, y)
++
++dtreeviz(m, xs.iloc[samp_idx], y.iloc[samp_idx], xs.columns, dep_var,
++        fontname='DejaVu Sans', scale=1.6, label_fontsize=10,
++        orientation='LR')
++# -
++
++m = DecisionTreeRegressor()
++m.fit(xs, y);
++
++
++def r_mse(pred,y): return round(math.sqrt(((pred-y)**2).mean()), 6)
++def m_rmse(m, xs, y): return r_mse(m.predict(xs), y)
++
++
++m_rmse(m, xs, y)
++
++m_rmse(m, valid_xs, valid_y)
++
++m.get_n_leaves(), len(xs)
++
++m = DecisionTreeRegressor(min_samples_leaf=25)
++m.fit(to.train.xs, to.train.y)
++m_rmse(m, xs, y), m_rmse(m, valid_xs, valid_y)
++
++m.get_n_leaves()
++
++
++# ### Categorical Variables
++
++# ## Random Forests
++
++# +
++#hide
++# pip install —pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn —U
++# -
++
++# ### Creating a Random Forest
++
++def rf(xs, y, n_estimators=40, max_samples=200_000,
++       max_features=0.5, min_samples_leaf=5, **kwargs):
++    return RandomForestRegressor(n_jobs=-1, n_estimators=n_estimators,
++        max_samples=max_samples, max_features=max_features,
++        min_samples_leaf=min_samples_leaf, oob_score=True).fit(xs, y)
++
++
++m = rf(xs, y);
++
++m_rmse(m, xs, y), m_rmse(m, valid_xs, valid_y)
++
++preds = np.stack([t.predict(valid_xs) for t in m.estimators_])
++
++r_mse(preds.mean(0), valid_y)
++
++plt.plot([r_mse(preds[:i+1].mean(0), valid_y) for i in range(40)]);
++
++# ### Out-of-Bag Error
++
++r_mse(m.oob_prediction_, y)
++
++# ## Model Interpretation
++
++# ### Tree Variance for Prediction Confidence
++
++preds = np.stack([t.predict(valid_xs) for t in m.estimators_])
++
++preds.shape
++
++preds_std = preds.std(0)
++
++preds_std[:5]
++
++
++# ### Feature Importance
++
++def rf_feat_importance(m, df):
++    return pd.DataFrame({'cols':df.columns, 'imp':m.feature_importances_}
++                       ).sort_values('imp', ascending=False)
++
++
++fi = rf_feat_importance(m, xs)
++fi[:10]
++
++
++# +
++def plot_fi(fi):
++    return fi.plot('cols', 'imp', 'barh', figsize=(12,7), legend=False)
++
++plot_fi(fi[:30]);
++# -
++
++# ### Removing Low-Importance Variables
++
++to_keep = fi[fi.imp>0.005].cols
++len(to_keep)
++
++xs_imp = xs[to_keep]
++valid_xs_imp = valid_xs[to_keep]
++
++m = rf(xs_imp, y)
++
++m_rmse(m, xs_imp, y), m_rmse(m, valid_xs_imp, valid_y)
++
++len(xs.columns), len(xs_imp.columns)
++
++plot_fi(rf_feat_importance(m, xs_imp));
++
++# ### Removing Redundant Features
++
++cluster_columns(xs_imp)
++
++
++def get_oob(df):
++    m = RandomForestRegressor(n_estimators=40, min_samples_leaf=15,
++        max_samples=50000, max_features=0.5, n_jobs=-1, oob_score=True)
++    m.fit(df, y)
++    return m.oob_score_
++
++
++get_oob(xs_imp)
++
++{c:get_oob(xs_imp.drop(c, axis=1)) for c in (
++    'saleYear', 'saleElapsed', 'ProductGroupDesc','ProductGroup',
++    'fiModelDesc', 'fiBaseModel',
++    'Hydraulics_Flow','Grouser_Tracks', 'Coupler_System')}
++
++to_drop = ['saleYear', 'ProductGroupDesc', 'fiBaseModel', 'Grouser_Tracks']
++get_oob(xs_imp.drop(to_drop, axis=1))
++
++xs_final = xs_imp.drop(to_drop, axis=1)
++valid_xs_final = valid_xs_imp.drop(to_drop, axis=1)
++
++(path/'xs_final.pkl').save(xs_final)
++(path/'valid_xs_final.pkl').save(valid_xs_final)
++
++xs_final = (path/'xs_final.pkl').load()
++valid_xs_final = (path/'valid_xs_final.pkl').load()
++
++m = rf(xs_final, y)
++m_rmse(m, xs_final, y), m_rmse(m, valid_xs_final, valid_y)
++
++# ### Partial Dependence
++
++p = valid_xs_final['ProductSize'].value_counts(sort=False).plot.barh()
++c = to.classes['ProductSize']
++plt.yticks(range(len(c)), c);
++
++ax = valid_xs_final['YearMade'].hist()
++
++# +
++from sklearn.inspection import plot_partial_dependence
++
++fig,ax = plt.subplots(figsize=(12, 4))
++plot_partial_dependence(m, valid_xs_final, ['YearMade','ProductSize'],
++                        grid_resolution=20, ax=ax);
++# -
++
++# ### Data Leakage
++
++# ### Tree Interpreter
++
++# +
++#hide
++import warnings
++warnings.simplefilter('ignore', FutureWarning)
++
++from treeinterpreter import treeinterpreter
++from waterfall_chart import plot as waterfall
++# -
++
++row = valid_xs_final.iloc[:5]
++
++prediction,bias,contributions = treeinterpreter.predict(m, row.values)
++
++prediction[0], bias[0], contributions[0].sum()
++
++waterfall(valid_xs_final.columns, contributions[0], threshold=0.08, 
++          rotation_value=45,formatting='{:,.3f}');
++
++# ## Extrapolation and Neural Networks
++
++# ### The Extrapolation Problem
++
++#hide
++np.random.seed(42)
++
++x_lin = torch.linspace(0,20, steps=40)
++y_lin = x_lin + torch.randn_like(x_lin)
++plt.scatter(x_lin, y_lin);
++
++xs_lin = x_lin.unsqueeze(1)
++x_lin.shape,xs_lin.shape
++
++x_lin[:,None].shape
++
++m_lin = RandomForestRegressor().fit(xs_lin[:30],y_lin[:30])
++
++plt.scatter(x_lin, y_lin, 20)
++plt.scatter(x_lin, m_lin.predict(xs_lin), color='red', alpha=0.5);
++
++# ### Finding Out-of-Domain Data
++
++# +
++df_dom = pd.concat([xs_final, valid_xs_final])
++is_valid = np.array([0]*len(xs_final) + [1]*len(valid_xs_final))
++
++m = rf(df_dom, is_valid)
++rf_feat_importance(m, df_dom)[:6]
++
++# +
++m = rf(xs_final, y)
++print('orig', m_rmse(m, valid_xs_final, valid_y))
++
++for c in ('SalesID','saleElapsed','MachineID'):
++    m = rf(xs_final.drop(c,axis=1), y)
++    print(c, m_rmse(m, valid_xs_final.drop(c,axis=1), valid_y))
++
++# +
++time_vars = ['SalesID','MachineID']
++xs_final_time = xs_final.drop(time_vars, axis=1)
++valid_xs_time = valid_xs_final.drop(time_vars, axis=1)
++
++m = rf(xs_final_time, y)
++m_rmse(m, valid_xs_time, valid_y)
++# -
++
++xs['saleYear'].hist();
++
++filt = xs['saleYear']>2004
++xs_filt = xs_final_time[filt]
++y_filt = y[filt]
++
++m = rf(xs_filt, y_filt)
++m_rmse(m, xs_filt, y_filt), m_rmse(m, valid_xs_time, valid_y)
++
++# ### Using a Neural Network
++
++df_nn = pd.read_csv(path/'TrainAndValid.csv', low_memory=False)
++df_nn['ProductSize'] = df_nn['ProductSize'].astype('category')
++df_nn['ProductSize'].cat.set_categories(sizes, ordered=True, inplace=True)
++df_nn[dep_var] = np.log(df_nn[dep_var])
++df_nn = add_datepart(df_nn, 'saledate')
++
++df_nn_final = df_nn[list(xs_final_time.columns) + [dep_var]]
++
++cont_nn,cat_nn = cont_cat_split(df_nn_final, max_card=9000, dep_var=dep_var)
++
++cont_nn.append('saleElapsed')
++cat_nn.remove('saleElapsed')
++
++df_nn_final[cat_nn].nunique()
++
++xs_filt2 = xs_filt.drop('fiModelDescriptor', axis=1)
++valid_xs_time2 = valid_xs_time.drop('fiModelDescriptor', axis=1)
++m2 = rf(xs_filt2, y_filt)
++m_rmse(m, xs_filt2, y_filt), m_rmse(m2, valid_xs_time2, valid_y)
++
++cat_nn.remove('fiModelDescriptor')
++
++procs_nn = [Categorify, FillMissing, Normalize]
++to_nn = TabularPandas(df_nn_final, procs_nn, cat_nn, cont_nn,
++                      splits=splits, y_names=dep_var)
++
++dls = to_nn.dataloaders(1024)
++
++y = to_nn.train.y
++y.min(),y.max()
++
++from fastai.tabular.all import *
++
++learn = tabular_learner(dls, y_range=(8,12), layers=[500,250],
++                        n_out=1, loss_func=F.mse_loss)
++
++learn.lr_find()
++
++learn.fit_one_cycle(5, 1e-2)
++
++preds,targs = learn.get_preds()
++r_mse(preds,targs)
++
++learn.save('nn')
++
++# ### Sidebar: fastai's Tabular Classes
++
++# ### End sidebar
++
++# ## Ensembling
++
++rf_preds = m.predict(valid_xs_time)
++ens_preds = (to_np(preds.squeeze()) + rf_preds) /2
++
++r_mse(ens_preds,valid_y)
++
++# ### Boosting
++
++# ### Combining Embeddings with Other Methods
++
++# ## Conclusion: Our Advice for Tabular Modeling
++
++# ## Questionnaire
++
++# 1. What is a continuous variable?
++# 1. What is a categorical variable?
++# 1. Provide two of the words that are used for the possible values of a categorical variable.
++# 1. What is a "dense layer"?
++# 1. How do entity embeddings reduce memory usage and speed up neural networks?
++# 1. What kinds of datasets are entity embeddings especially useful for?
++# 1. What are the two main families of machine learning algorithms?
++# 1. Why do some categorical columns need a special ordering in their classes? How do you do this in Pandas?
++# 1. Summarize what a decision tree algorithm does.
++# 1. Why is a date different from a regular categorical or continuous variable, and how can you preprocess it to allow it to be used in a model?
++# 1. Should you pick a random validation set in the bulldozer competition? If no, what kind of validation set should you pick?
++# 1. What is pickle and what is it useful for?
++# 1. How are `mse`, `samples`, and `values` calculated in the decision tree drawn in this chapter?
++# 1. How do we deal with outliers, before building a decision tree?
++# 1. How do we handle categorical variables in a decision tree?
++# 1. What is bagging?
++# 1. What is the difference between `max_samples` and `max_features` when creating a random forest?
++# 1. If you increase `n_estimators` to a very high value, can that lead to overfitting? Why or why not?
++# 1. In the section "Creating a Random Forest", just after <<max_features>>, why did `preds.mean(0)` give the same result as our random forest?
++# 1. What is "out-of-bag-error"?
++# 1. Make a list of reasons why a model's validation set error might be worse than the OOB error. How could you test your hypotheses?
++# 1. Explain why random forests are well suited to answering each of the following question:
++#    - How confident are we in our predictions using a particular row of data?
++#    - For predicting with a particular row of data, what were the most important factors, and how did they influence that prediction?
++#    - Which columns are the strongest predictors?
++#    - How do predictions vary as we vary these columns?
++# 1. What's the purpose of removing unimportant variables?
++# 1. What's a good type of plot for showing tree interpreter results?
++# 1. What is the "extrapolation problem"?
++# 1. How can you tell if your test or validation set is distributed in a different way than your training set?
++# 1. Why do we make `saleElapsed` a continuous variable, even although it has less than 9,000 distinct values?
++# 1. What is "boosting"?
++# 1. How could we use embeddings with a random forest? Would we expect this to help?
++# 1. Why might we not always use a neural net for tabular modeling?
++
++# ### Further Research
++
++# 1. Pick a competition on Kaggle with tabular data (current or past) and try to adapt the techniques seen in this chapter to get the best possible results. Compare your results to the private leaderboard.
++# 1. Implement the decision tree algorithm in this chapter from scratch yourself, and try it on the datase you used in the first exercise.
++# 1. Use the embeddings from the neural net in this chapter in a random forest, and see if you can improve on the random forest results we saw.
++# 1. Explain what each line of the source of `TabularModel` does (with the exception of the `BatchNorm1d` and `Dropout` layers).
++
++
+diff --git a/nbs/10_nlp.py b/nbs/10_nlp.py
+new file mode 100644
+index 0000000..713bc07
+--- /dev/null
++++ ./nbs/10_nlp.py
+@@ -0,0 +1,239 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++from IPython.display import display,HTML
++
++# # NLP Deep Dive: RNNs
++
++# ## Text Preprocessing
++
++# ### Tokenization
++
++# ### Word Tokenization with fastai
++
++from fastai.text.all import *
++path = untar_data(URLs.IMDB)
++
++files = get_text_files(path, folders = ['train', 'test', 'unsup'])
++
++txt = files[0].open().read(); txt[:75]
++
++spacy = WordTokenizer()
++toks = first(spacy([txt]))
++print(coll_repr(toks, 30))
++
++first(spacy(['The U.S. dollar $1 is $1.00.']))
++
++tkn = Tokenizer(spacy)
++print(coll_repr(tkn(txt), 31))
++
++defaults.text_proc_rules
++
++coll_repr(tkn('&copy;   Fast.ai www.fast.ai/INDEX'), 31)
++
++# ### Subword Tokenization
++
++txts = L(o.open().read() for o in files[:2000])
++
++
++def subword(sz):
++    sp = SubwordTokenizer(vocab_sz=sz)
++    sp.setup(txts)
++    return ' '.join(first(sp([txt]))[:40])
++
++
++subword(1000)
++
++subword(200)
++
++subword(10000)
++
++# ### Numericalization with fastai
++
++toks = tkn(txt)
++print(coll_repr(tkn(txt), 31))
++
++toks200 = txts[:200].map(tkn)
++toks200[0]
++
++num = Numericalize()
++num.setup(toks200)
++coll_repr(num.vocab,20)
++
++nums = num(toks)[:20]; nums
++
++' '.join(num.vocab[o] for o in nums)
++
++# ### Putting Our Texts into Batches for a Language Model
++
++# + hide_input=false
++stream = "In this chapter, we will go back over the example of classifying movie reviews we studied in chapter 1 and dig deeper under the surface. First we will look at the processing steps necessary to convert text into numbers and how to customize it. By doing this, we'll have another example of the PreProcessor used in the data block API.\nThen we will study how we build a language model and train it for a while."
++tokens = tkn(stream)
++bs,seq_len = 6,15
++d_tokens = np.array([tokens[i*seq_len:(i+1)*seq_len] for i in range(bs)])
++df = pd.DataFrame(d_tokens)
++display(HTML(df.to_html(index=False,header=None)))
++
++# + hide_input=true
++bs,seq_len = 6,5
++d_tokens = np.array([tokens[i*15:i*15+seq_len] for i in range(bs)])
++df = pd.DataFrame(d_tokens)
++display(HTML(df.to_html(index=False,header=None)))
++
++# + hide_input=true
++bs,seq_len = 6,5
++d_tokens = np.array([tokens[i*15+seq_len:i*15+2*seq_len] for i in range(bs)])
++df = pd.DataFrame(d_tokens)
++display(HTML(df.to_html(index=False,header=None)))
++
++# + hide_input=true
++bs,seq_len = 6,5
++d_tokens = np.array([tokens[i*15+10:i*15+15] for i in range(bs)])
++df = pd.DataFrame(d_tokens)
++display(HTML(df.to_html(index=False,header=None)))
++# -
++
++nums200 = toks200.map(num)
++
++dl = LMDataLoader(nums200)
++
++x,y = first(dl)
++x.shape,y.shape
++
++' '.join(num.vocab[o] for o in x[0][:20])
++
++' '.join(num.vocab[o] for o in y[0][:20])
++
++# ## Training a Text Classifier
++
++# ### Language Model Using DataBlock
++
++# +
++get_imdb = partial(get_text_files, folders=['train', 'test', 'unsup'])
++
++dls_lm = DataBlock(
++    blocks=TextBlock.from_folder(path, is_lm=True),
++    get_items=get_imdb, splitter=RandomSplitter(0.1)
++).dataloaders(path, path=path, bs=128, seq_len=80)
++# -
++
++dls_lm.show_batch(max_n=2)
++
++# ### Fine-Tuning the Language Model
++
++learn = language_model_learner(
++    dls_lm, AWD_LSTM, drop_mult=0.3, 
++    metrics=[accuracy, Perplexity()]).to_fp16()
++
++learn.fit_one_cycle(1, 2e-2)
++
++# ### Saving and Loading Models
++
++learn.save('1epoch')
++
++learn = learn.load('1epoch')
++
++learn.unfreeze()
++learn.fit_one_cycle(10, 2e-3)
++
++learn.save_encoder('finetuned')
++
++# ### Text Generation
++
++TEXT = "I liked this movie because"
++N_WORDS = 40
++N_SENTENCES = 2
++preds = [learn.predict(TEXT, N_WORDS, temperature=0.75) 
++         for _ in range(N_SENTENCES)]
++
++print("\n".join(preds))
++
++# ### Creating the Classifier DataLoaders
++
++dls_clas = DataBlock(
++    blocks=(TextBlock.from_folder(path, vocab=dls_lm.vocab),CategoryBlock),
++    get_y = parent_label,
++    get_items=partial(get_text_files, folders=['train', 'test']),
++    splitter=GrandparentSplitter(valid_name='test')
++).dataloaders(path, path=path, bs=128, seq_len=72)
++
++dls_clas.show_batch(max_n=3)
++
++nums_samp = toks200[:10].map(num)
++
++nums_samp.map(len)
++
++learn = text_classifier_learner(dls_clas, AWD_LSTM, drop_mult=0.5, 
++                                metrics=accuracy).to_fp16()
++
++learn = learn.load_encoder('finetuned')
++
++# ### Fine-Tuning the Classifier
++
++learn.fit_one_cycle(1, 2e-2)
++
++learn.freeze_to(-2)
++learn.fit_one_cycle(1, slice(1e-2/(2.6**4),1e-2))
++
++learn.freeze_to(-3)
++learn.fit_one_cycle(1, slice(5e-3/(2.6**4),5e-3))
++
++learn.unfreeze()
++learn.fit_one_cycle(2, slice(1e-3/(2.6**4),1e-3))
++
++# ## Disinformation and Language Models
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. What is "self-supervised learning"?
++# 1. What is a "language model"?
++# 1. Why is a language model considered self-supervised?
++# 1. What are self-supervised models usually used for?
++# 1. Why do we fine-tune language models?
++# 1. What are the three steps to create a state-of-the-art text classifier?
++# 1. How do the 50,000 unlabeled movie reviews help us create a better text classifier for the IMDb dataset?
++# 1. What are the three steps to prepare your data for a language model?
++# 1. What is "tokenization"? Why do we need it?
++# 1. Name three different approaches to tokenization.
++# 1. What is `xxbos`?
++# 1. List four rules that fastai applies to text during tokenization.
++# 1. Why are repeated characters replaced with a token showing the number of repetitions and the character that's repeated?
++# 1. What is "numericalization"?
++# 1. Why might there be words that are replaced with the "unknown word" token?
++# 1. With a batch size of 64, the first row of the tensor representing the first batch contains the first 64 tokens for the dataset. What does the second row of that tensor contain? What does the first row of the second batch contain? (Careful—students often get this one wrong! Be sure to check your answer on the book's website.)
++# 1. Why do we need padding for text classification? Why don't we need it for language modeling?
++# 1. What does an embedding matrix for NLP contain? What is its shape?
++# 1. What is "perplexity"?
++# 1. Why do we have to pass the vocabulary of the language model to the classifier data block?
++# 1. What is "gradual unfreezing"?
++# 1. Why is text generation always likely to be ahead of automatic identification of machine-generated texts?
++
++# ### Further Research
++
++# 1. See what you can learn about language models and disinformation. What are the best language models today? Take a look at some of their outputs. Do you find them convincing? How could a bad actor best use such a model to create conflict and uncertainty?
++# 1. Given the limitation that models are unlikely to be able to consistently recognize machine-generated texts, what other approaches may be needed to handle large-scale disinformation campaigns that leverage deep learning?
++
++
+diff --git a/nbs/11_midlevel_data.py b/nbs/11_midlevel_data.py
+new file mode 100644
+index 0000000..1e7ff4f
+--- /dev/null
++++ ./nbs/11_midlevel_data.py
+@@ -0,0 +1,261 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++from IPython.display import display,HTML
++
++# # Data Munging with fastai's Mid-Level API
++
++# ## Going Deeper into fastai's Layered API
++
++# +
++from fastai.text.all import *
++
++dls = TextDataLoaders.from_folder(untar_data(URLs.IMDB), valid='test')
++# -
++
++path = untar_data(URLs.IMDB)
++dls = DataBlock(
++    blocks=(TextBlock.from_folder(path),CategoryBlock),
++    get_y = parent_label,
++    get_items=partial(get_text_files, folders=['train', 'test']),
++    splitter=GrandparentSplitter(valid_name='test')
++).dataloaders(path)
++
++# ### Transforms
++
++files = get_text_files(path, folders = ['train', 'test'])
++txts = L(o.open().read() for o in files[:2000])
++
++tok = Tokenizer.from_folder(path)
++tok.setup(txts)
++toks = txts.map(tok)
++toks[0]
++
++num = Numericalize()
++num.setup(toks)
++nums = toks.map(num)
++nums[0][:10]
++
++nums_dec = num.decode(nums[0][:10]); nums_dec
++
++tok.decode(nums_dec)
++
++tok((txts[0], txts[1]))
++
++
++# ### Writing Your Own Transform
++
++def f(x:int): return x+1
++tfm = Transform(f)
++tfm(2),tfm(2.0)
++
++
++@Transform
++def f(x:int): return x+1
++f(2),f(2.0)
++
++
++class NormalizeMean(Transform):
++    def setups(self, items): self.mean = sum(items)/len(items)
++    def encodes(self, x): return x-self.mean
++    def decodes(self, x): return x+self.mean
++
++
++tfm = NormalizeMean()
++tfm.setup([1,2,3,4,5])
++start = 2
++y = tfm(start)
++z = tfm.decode(y)
++tfm.mean,y,z
++
++# ### Pipeline
++
++tfms = Pipeline([tok, num])
++t = tfms(txts[0]); t[:20]
++
++tfms.decode(t)[:100]
++
++# ## TfmdLists and Datasets: Transformed Collections
++
++# ### TfmdLists
++
++tls = TfmdLists(files, [Tokenizer.from_folder(path), Numericalize])
++
++t = tls[0]; t[:20]
++
++tls.decode(t)[:100]
++
++tls.show(t)
++
++cut = int(len(files)*0.8)
++splits = [list(range(cut)), list(range(cut,len(files)))]
++tls = TfmdLists(files, [Tokenizer.from_folder(path), Numericalize], 
++                splits=splits)
++
++tls.valid[0][:20]
++
++lbls = files.map(parent_label)
++lbls
++
++cat = Categorize()
++cat.setup(lbls)
++cat.vocab, cat(lbls[0])
++
++tls_y = TfmdLists(files, [parent_label, Categorize()])
++tls_y[0]
++
++# ### Datasets
++
++x_tfms = [Tokenizer.from_folder(path), Numericalize]
++y_tfms = [parent_label, Categorize()]
++dsets = Datasets(files, [x_tfms, y_tfms])
++x,y = dsets[0]
++x[:20],y
++
++x_tfms = [Tokenizer.from_folder(path), Numericalize]
++y_tfms = [parent_label, Categorize()]
++dsets = Datasets(files, [x_tfms, y_tfms], splits=splits)
++x,y = dsets.valid[0]
++x[:20],y
++
++t = dsets.valid[0]
++dsets.decode(t)
++
++dls = dsets.dataloaders(bs=64, before_batch=pad_input)
++
++tfms = [[Tokenizer.from_folder(path), Numericalize], [parent_label, Categorize]]
++files = get_text_files(path, folders = ['train', 'test'])
++splits = GrandparentSplitter(valid_name='test')(files)
++dsets = Datasets(files, tfms, splits=splits)
++dls = dsets.dataloaders(dl_type=SortedDL, before_batch=pad_input)
++
++path = untar_data(URLs.IMDB)
++dls = DataBlock(
++    blocks=(TextBlock.from_folder(path),CategoryBlock),
++    get_y = parent_label,
++    get_items=partial(get_text_files, folders=['train', 'test']),
++    splitter=GrandparentSplitter(valid_name='test')
++).dataloaders(path)
++
++# ## Applying the Mid-Level Data API: SiamesePair
++
++from fastai.vision.all import *
++path = untar_data(URLs.PETS)
++files = get_image_files(path/"images")
++
++
++class SiameseImage(Tuple):
++    def show(self, ctx=None, **kwargs): 
++        img1,img2,same_breed = self
++        if not isinstance(img1, Tensor):
++            if img2.size != img1.size: img2 = img2.resize(img1.size)
++            t1,t2 = tensor(img1),tensor(img2)
++            t1,t2 = t1.permute(2,0,1),t2.permute(2,0,1)
++        else: t1,t2 = img1,img2
++        line = t1.new_zeros(t1.shape[0], t1.shape[1], 10)
++        return show_image(torch.cat([t1,line,t2], dim=2), 
++                          title=same_breed, ctx=ctx)
++
++
++img = PILImage.create(files[0])
++s = SiameseImage(img, img, True)
++s.show();
++
++img1 = PILImage.create(files[1])
++s1 = SiameseImage(img, img1, False)
++s1.show();
++
++s2 = Resize(224)(s1)
++s2.show();
++
++
++def label_func(fname):
++    return re.match(r'^(.*)_\d+.jpg$', fname.name).groups()[0]
++
++
++class SiameseTransform(Transform):
++    def __init__(self, files, label_func, splits):
++        self.labels = files.map(label_func).unique()
++        self.lbl2files = {l: L(f for f in files if label_func(f) == l) 
++                          for l in self.labels}
++        self.label_func = label_func
++        self.valid = {f: self._draw(f) for f in files[splits[1]]}
++        
++    def encodes(self, f):
++        f2,t = self.valid.get(f, self._draw(f))
++        img1,img2 = PILImage.create(f),PILImage.create(f2)
++        return SiameseImage(img1, img2, t)
++    
++    def _draw(self, f):
++        same = random.random() < 0.5
++        cls = self.label_func(f)
++        if not same: 
++            cls = random.choice(L(l for l in self.labels if l != cls)) 
++        return random.choice(self.lbl2files[cls]),same
++
++
++splits = RandomSplitter()(files)
++tfm = SiameseTransform(files, label_func, splits)
++tfm(files[0]).show();
++
++tls = TfmdLists(files, tfm, splits=splits)
++show_at(tls.valid, 0);
++
++dls = tls.dataloaders(after_item=[Resize(224), ToTensor], 
++    after_batch=[IntToFloatTensor, Normalize.from_stats(*imagenet_stats)])
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. Why do we say that fastai has a "layered" API? What does it mean?
++# 1. Why does a `Transform` have a `decode` method? What does it do?
++# 1. Why does a `Transform` have a `setup` method? What does it do?
++# 1. How does a `Transform` work when called on a tuple?
++# 1. Which methods do you need to implement when writing your own `Transform`?
++# 1. Write a `Normalize` transform that fully normalizes items (subtract the mean and divide by the standard deviation of the dataset), and that can decode that behavior. Try not to peek!
++# 1. Write a `Transform` that does the numericalization of tokenized texts (it should set its vocab automatically from the dataset seen and have a `decode` method). Look at the source code of fastai if you need help.
++# 1. What is a `Pipeline`?
++# 1. What is a `TfmdLists`? 
++# 1. What is a `Datasets`? How is it different from a `TfmdLists`?
++# 1. Why are `TfmdLists` and `Datasets` named with an "s"?
++# 1. How can you build a `DataLoaders` from a `TfmdLists` or a `Datasets`?
++# 1. How do you pass `item_tfms` and `batch_tfms` when building a `DataLoaders` from a `TfmdLists` or a `Datasets`?
++# 1. What do you need to do when you want to have your custom items work with methods like `show_batch` or `show_results`?
++# 1. Why can we easily apply fastai data augmentation transforms to the `SiamesePair` we built?
++
++# ### Further Research
++
++# 1. Use the mid-level API to prepare the data in `DataLoaders` on your own datasets. Try this with the Pet dataset and the Adult dataset from Chapter 1.
++# 1. Look at the Siamese tutorial in the fastai documentation to learn how to customize the behavior of `show_batch` and `show_results` for new type of items. Implement it in your own project.
++
++# ## Understanding fastai's Applications: Wrap Up
++
++# Congratulations—you've completed all of the chapters in this book that cover the key practical parts of training models and using deep learning! You know how to use all of fastai's built-in applications, and how to customize them using the data block API and loss functions. You even know how to create a neural network from scratch, and train it! (And hopefully you now know some of the questions to ask to make sure your creations help improve society too.)
++#
++# The knowledge you already have is enough to create full working prototypes of many types of neural network application. More importantly, it will help you understand the capabilities and limitations of deep learning models, and how to design a system that's well adapted to them.
++#
++# In the rest of this book we will be pulling apart those applications, piece by piece, to understand the foundations they are built on. This is important knowledge for a deep learning practitioner, because it is what allows you to inspect and debug models that you build and create new applications that are customized for your particular projects.
++
++
+diff --git a/nbs/12_nlp_dive.py b/nbs/12_nlp_dive.py
+new file mode 100644
+index 0000000..075d69d
+--- /dev/null
++++ ./nbs/12_nlp_dive.py
+@@ -0,0 +1,393 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # A Language Model from Scratch
++
++# ## The Data
++
++from fastai.text.all import *
++path = untar_data(URLs.HUMAN_NUMBERS)
++
++#hide
++Path.BASE_PATH = path
++
++path.ls()
++
++lines = L()
++with open(path/'train.txt') as f: lines += L(*f.readlines())
++with open(path/'valid.txt') as f: lines += L(*f.readlines())
++lines
++
++text = ' . '.join([l.strip() for l in lines])
++text[:100]
++
++tokens = text.split(' ')
++tokens[:10]
++
++vocab = L(*tokens).unique()
++vocab
++
++word2idx = {w:i for i,w in enumerate(vocab)}
++nums = L(word2idx[i] for i in tokens)
++nums
++
++# ## Our First Language Model from Scratch
++
++L((tokens[i:i+3], tokens[i+3]) for i in range(0,len(tokens)-4,3))
++
++seqs = L((tensor(nums[i:i+3]), nums[i+3]) for i in range(0,len(nums)-4,3))
++seqs
++
++bs = 64
++cut = int(len(seqs) * 0.8)
++dls = DataLoaders.from_dsets(seqs[:cut], seqs[cut:], bs=64, shuffle=False)
++
++
++# ### Our Language Model in PyTorch
++
++class LMModel1(Module):
++    def __init__(self, vocab_sz, n_hidden):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)  
++        self.h_h = nn.Linear(n_hidden, n_hidden)     
++        self.h_o = nn.Linear(n_hidden,vocab_sz)
++        
++    def forward(self, x):
++        h = F.relu(self.h_h(self.i_h(x[:,0])))
++        h = h + self.i_h(x[:,1])
++        h = F.relu(self.h_h(h))
++        h = h + self.i_h(x[:,2])
++        h = F.relu(self.h_h(h))
++        return self.h_o(h)
++
++
++learn = Learner(dls, LMModel1(len(vocab), 64), loss_func=F.cross_entropy, 
++                metrics=accuracy)
++learn.fit_one_cycle(4, 1e-3)
++
++n,counts = 0,torch.zeros(len(vocab))
++for x,y in dls.valid:
++    n += y.shape[0]
++    for i in range_of(vocab): counts[i] += (y==i).long().sum()
++idx = torch.argmax(counts)
++idx, vocab[idx.item()], counts[idx].item()/n
++
++
++# ### Our First Recurrent Neural Network
++
++class LMModel2(Module):
++    def __init__(self, vocab_sz, n_hidden):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)  
++        self.h_h = nn.Linear(n_hidden, n_hidden)     
++        self.h_o = nn.Linear(n_hidden,vocab_sz)
++        
++    def forward(self, x):
++        h = 0
++        for i in range(3):
++            h = h + self.i_h(x[:,i])
++            h = F.relu(self.h_h(h))
++        return self.h_o(h)
++
++
++learn = Learner(dls, LMModel2(len(vocab), 64), loss_func=F.cross_entropy, 
++                metrics=accuracy)
++learn.fit_one_cycle(4, 1e-3)
++
++
++# ## Improving the RNN
++
++# ### Maintaining the State of an RNN
++
++class LMModel3(Module):
++    def __init__(self, vocab_sz, n_hidden):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)  
++        self.h_h = nn.Linear(n_hidden, n_hidden)     
++        self.h_o = nn.Linear(n_hidden,vocab_sz)
++        self.h = 0
++        
++    def forward(self, x):
++        for i in range(3):
++            self.h = self.h + self.i_h(x[:,i])
++            self.h = F.relu(self.h_h(self.h))
++        out = self.h_o(self.h)
++        self.h = self.h.detach()
++        return out
++    
++    def reset(self): self.h = 0
++
++
++m = len(seqs)//bs
++m,bs,len(seqs)
++
++
++def group_chunks(ds, bs):
++    m = len(ds) // bs
++    new_ds = L()
++    for i in range(m): new_ds += L(ds[i + m*j] for j in range(bs))
++    return new_ds
++
++
++cut = int(len(seqs) * 0.8)
++dls = DataLoaders.from_dsets(
++    group_chunks(seqs[:cut], bs), 
++    group_chunks(seqs[cut:], bs), 
++    bs=bs, drop_last=True, shuffle=False)
++
++learn = Learner(dls, LMModel3(len(vocab), 64), loss_func=F.cross_entropy,
++                metrics=accuracy, cbs=ModelResetter)
++learn.fit_one_cycle(10, 3e-3)
++
++# ### Creating More Signal
++
++sl = 16
++seqs = L((tensor(nums[i:i+sl]), tensor(nums[i+1:i+sl+1]))
++         for i in range(0,len(nums)-sl-1,sl))
++cut = int(len(seqs) * 0.8)
++dls = DataLoaders.from_dsets(group_chunks(seqs[:cut], bs),
++                             group_chunks(seqs[cut:], bs),
++                             bs=bs, drop_last=True, shuffle=False)
++
++[L(vocab[o] for o in s) for s in seqs[0]]
++
++
++class LMModel4(Module):
++    def __init__(self, vocab_sz, n_hidden):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)  
++        self.h_h = nn.Linear(n_hidden, n_hidden)     
++        self.h_o = nn.Linear(n_hidden,vocab_sz)
++        self.h = 0
++        
++    def forward(self, x):
++        outs = []
++        for i in range(sl):
++            self.h = self.h + self.i_h(x[:,i])
++            self.h = F.relu(self.h_h(self.h))
++            outs.append(self.h_o(self.h))
++        self.h = self.h.detach()
++        return torch.stack(outs, dim=1)
++    
++    def reset(self): self.h = 0
++
++
++def loss_func(inp, targ):
++    return F.cross_entropy(inp.view(-1, len(vocab)), targ.view(-1))
++
++
++learn = Learner(dls, LMModel4(len(vocab), 64), loss_func=loss_func,
++                metrics=accuracy, cbs=ModelResetter)
++learn.fit_one_cycle(15, 3e-3)
++
++
++# ## Multilayer RNNs
++
++# ### The Model
++
++class LMModel5(Module):
++    def __init__(self, vocab_sz, n_hidden, n_layers):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)
++        self.rnn = nn.RNN(n_hidden, n_hidden, n_layers, batch_first=True)
++        self.h_o = nn.Linear(n_hidden, vocab_sz)
++        self.h = torch.zeros(n_layers, bs, n_hidden)
++        
++    def forward(self, x):
++        res,h = self.rnn(self.i_h(x), self.h)
++        self.h = h.detach()
++        return self.h_o(res)
++    
++    def reset(self): self.h.zero_()
++
++
++learn = Learner(dls, LMModel5(len(vocab), 64, 2), 
++                loss_func=CrossEntropyLossFlat(), 
++                metrics=accuracy, cbs=ModelResetter)
++learn.fit_one_cycle(15, 3e-3)
++
++
++# ### Exploding or Disappearing Activations
++
++# ## LSTM
++
++# ### Building an LSTM from Scratch
++
++class LSTMCell(Module):
++    def __init__(self, ni, nh):
++        self.forget_gate = nn.Linear(ni + nh, nh)
++        self.input_gate  = nn.Linear(ni + nh, nh)
++        self.cell_gate   = nn.Linear(ni + nh, nh)
++        self.output_gate = nn.Linear(ni + nh, nh)
++
++    def forward(self, input, state):
++        h,c = state
++        h = torch.stack([h, input], dim=1)
++        forget = torch.sigmoid(self.forget_gate(h))
++        c = c * forget
++        inp = torch.sigmoid(self.input_gate(h))
++        cell = torch.tanh(self.cell_gate(h))
++        c = c + inp * cell
++        out = torch.sigmoid(self.output_gate(h))
++        h = outgate * torch.tanh(c)
++        return h, (h,c)
++
++
++class LSTMCell(Module):
++    def __init__(self, ni, nh):
++        self.ih = nn.Linear(ni,4*nh)
++        self.hh = nn.Linear(nh,4*nh)
++
++    def forward(self, input, state):
++        h,c = state
++        # One big multiplication for all the gates is better than 4 smaller ones
++        gates = (self.ih(input) + self.hh(h)).chunk(4, 1)
++        ingate,forgetgate,outgate = map(torch.sigmoid, gates[:3])
++        cellgate = gates[3].tanh()
++
++        c = (forgetgate*c) + (ingate*cellgate)
++        h = outgate * c.tanh()
++        return h, (h,c)
++
++
++t = torch.arange(0,10); t
++
++t.chunk(2)
++
++
++# ### Training a Language Model Using LSTMs
++
++class LMModel6(Module):
++    def __init__(self, vocab_sz, n_hidden, n_layers):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)
++        self.rnn = nn.LSTM(n_hidden, n_hidden, n_layers, batch_first=True)
++        self.h_o = nn.Linear(n_hidden, vocab_sz)
++        self.h = [torch.zeros(n_layers, bs, n_hidden) for _ in range(2)]
++        
++    def forward(self, x):
++        res,h = self.rnn(self.i_h(x), self.h)
++        self.h = [h_.detach() for h_ in h]
++        return self.h_o(res)
++    
++    def reset(self): 
++        for h in self.h: h.zero_()
++
++
++learn = Learner(dls, LMModel6(len(vocab), 64, 2), 
++                loss_func=CrossEntropyLossFlat(), 
++                metrics=accuracy, cbs=ModelResetter)
++learn.fit_one_cycle(15, 1e-2)
++
++
++# ## Regularizing an LSTM
++
++# ### Dropout
++
++class Dropout(Module):
++    def __init__(self, p): self.p = p
++    def forward(self, x):
++        if not self.training: return x
++        mask = x.new(*x.shape).bernoulli_(1-p)
++        return x * mask.div_(1-p)
++
++
++# ### Activation Regularization and Temporal Activation Regularization
++
++# ### Training a Weight-Tied Regularized LSTM
++
++class LMModel7(Module):
++    def __init__(self, vocab_sz, n_hidden, n_layers, p):
++        self.i_h = nn.Embedding(vocab_sz, n_hidden)
++        self.rnn = nn.LSTM(n_hidden, n_hidden, n_layers, batch_first=True)
++        self.drop = nn.Dropout(p)
++        self.h_o = nn.Linear(n_hidden, vocab_sz)
++        self.h_o.weight = self.i_h.weight
++        self.h = [torch.zeros(n_layers, bs, n_hidden) for _ in range(2)]
++        
++    def forward(self, x):
++        raw,h = self.rnn(self.i_h(x), self.h)
++        out = self.drop(raw)
++        self.h = [h_.detach() for h_ in h]
++        return self.h_o(out),raw,out
++    
++    def reset(self): 
++        for h in self.h: h.zero_()
++
++
++learn = Learner(dls, LMModel7(len(vocab), 64, 2, 0.5),
++                loss_func=CrossEntropyLossFlat(), metrics=accuracy,
++                cbs=[ModelResetter, RNNRegularizer(alpha=2, beta=1)])
++
++learn = TextLearner(dls, LMModel7(len(vocab), 64, 2, 0.4),
++                    loss_func=CrossEntropyLossFlat(), metrics=accuracy)
++
++learn.fit_one_cycle(15, 1e-2, wd=0.1)
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. If the dataset for your project is so big and complicated that working with it takes a significant amount of time, what should you do?
++# 1. Why do we concatenate the documents in our dataset before creating a language model?
++# 1. To use a standard fully connected network to predict the fourth word given the previous three words, what two tweaks do we need to make to ou model?
++# 1. How can we share a weight matrix across multiple layers in PyTorch?
++# 1. Write a module that predicts the third word given the previous two words of a sentence, without peeking.
++# 1. What is a recurrent neural network?
++# 1. What is "hidden state"?
++# 1. What is the equivalent of hidden state in ` LMModel1`?
++# 1. To maintain the state in an RNN, why is it important to pass the text to the model in order?
++# 1. What is an "unrolled" representation of an RNN?
++# 1. Why can maintaining the hidden state in an RNN lead to memory and performance problems? How do we fix this problem?
++# 1. What is "BPTT"?
++# 1. Write code to print out the first few batches of the validation set, including converting the token IDs back into English strings, as we showed for batches of IMDb data in <<chapter_nlp>>.
++# 1. What does the `ModelResetter` callback do? Why do we need it?
++# 1. What are the downsides of predicting just one output word for each three input words?
++# 1. Why do we need a custom loss function for `LMModel4`?
++# 1. Why is the training of `LMModel4` unstable?
++# 1. In the unrolled representation, we can see that a recurrent neural network actually has many layers. So why do we need to stack RNNs to get better results?
++# 1. Draw a representation of a stacked (multilayer) RNN.
++# 1. Why should we get better results in an RNN if we call `detach` less often? Why might this not happen in practice with a simple RNN?
++# 1. Why can a deep network result in very large or very small activations? Why does this matter?
++# 1. In a computer's floating-point representation of numbers, which numbers are the most precise?
++# 1. Why do vanishing gradients prevent training?
++# 1. Why does it help to have two hidden states in the LSTM architecture? What is the purpose of each one?
++# 1. What are these two states called in an LSTM?
++# 1. What is tanh, and how is it related to sigmoid?
++# 1. What is the purpose of this code in `LSTMCell`: `h = torch.stack([h, input], dim=1)`
++# 1. What does `chunk` do in PyTorch?
++# 1. Study the refactored version of `LSTMCell` carefully to ensure you understand how and why it does the same thing as the non-refactored version.
++# 1. Why can we use a higher learning rate for `LMModel6`?
++# 1. What are the three regularization techniques used in an AWD-LSTM model?
++# 1. What is "dropout"?
++# 1. Why do we scale the weights with dropout? Is this applied during training, inference, or both?
++# 1. What is the purpose of this line from `Dropout`: `if not self.training: return x`
++# 1. Experiment with `bernoulli_` to understand how it works.
++# 1. How do you set your model in training mode in PyTorch? In evaluation mode?
++# 1. Write the equation for activation regularization (in math or code, as you prefer). How is it different from weight decay?
++# 1. Write the equation for temporal activation regularization (in math or code, as you prefer). Why wouldn't we use this for computer vision problems?
++# 1. What is "weight tying" in a language model?
++
++# ### Further Research
++
++# 1. In ` LMModel2`, why can `forward` start with `h=0`? Why don't we need to say `h=torch.zeros(...)`?
++# 1. Write the code for an LSTM from scratch (you may refer to <<lstm>>).
++# 1. Search the internet for the GRU architecture and implement it from scratch, and try training a model. See if you can get results similar to those we saw in this chapter. Compare you results to the results of PyTorch's built in `GRU` module.
++# 1. Take a look at the source code for AWD-LSTM in fastai, and try to map each of the lines of code to the concepts shown in this chapter.
++
++
+diff --git a/nbs/13_convolutions.py b/nbs/13_convolutions.py
+new file mode 100644
+index 0000000..84d64a5
+--- /dev/null
++++ ./nbs/13_convolutions.py
+@@ -0,0 +1,351 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# +
++#hide
++from fastai.vision.all import *
++from fastbook import *
++
++matplotlib.rc('image', cmap='Greys')
++# -
++
++# # Convolutional Neural Networks
++
++# ## The Magic of Convolutions
++
++top_edge = tensor([[-1,-1,-1],
++                   [ 0, 0, 0],
++                   [ 1, 1, 1]]).float()
++
++path = untar_data(URLs.MNIST_SAMPLE)
++
++#hide
++Path.BASE_PATH = path
++
++im3 = Image.open(path/'train'/'3'/'12.png')
++show_image(im3);
++
++im3_t = tensor(im3)
++im3_t[0:3,0:3] * top_edge
++
++(im3_t[0:3,0:3] * top_edge).sum()
++
++df = pd.DataFrame(im3_t[:10,:20])
++df.style.set_properties(**{'font-size':'6pt'}).background_gradient('Greys')
++
++(im3_t[4:7,6:9] * top_edge).sum()
++
++(im3_t[7:10,17:20] * top_edge).sum()
++
++
++def apply_kernel(row, col, kernel):
++    return (im3_t[row-1:row+2,col-1:col+2] * kernel).sum()
++
++
++apply_kernel(5,7,top_edge)
++
++# ### Mapping a Convolution Kernel
++
++[[(i,j) for j in range(1,5)] for i in range(1,5)]
++
++# +
++rng = range(1,27)
++top_edge3 = tensor([[apply_kernel(i,j,top_edge) for j in rng] for i in rng])
++
++show_image(top_edge3);
++
++# +
++left_edge = tensor([[-1,1,0],
++                    [-1,1,0],
++                    [-1,1,0]]).float()
++
++left_edge3 = tensor([[apply_kernel(i,j,left_edge) for j in rng] for i in rng])
++
++show_image(left_edge3);
++# -
++
++# ### Convolutions in PyTorch
++
++# +
++diag1_edge = tensor([[ 0,-1, 1],
++                     [-1, 1, 0],
++                     [ 1, 0, 0]]).float()
++diag2_edge = tensor([[ 1,-1, 0],
++                     [ 0, 1,-1],
++                     [ 0, 0, 1]]).float()
++
++edge_kernels = torch.stack([left_edge, top_edge, diag1_edge, diag2_edge])
++edge_kernels.shape
++
++# +
++mnist = DataBlock((ImageBlock(cls=PILImageBW), CategoryBlock), 
++                  get_items=get_image_files, 
++                  splitter=GrandparentSplitter(),
++                  get_y=parent_label)
++
++dls = mnist.dataloaders(path)
++xb,yb = first(dls.valid)
++xb.shape
++# -
++
++xb,yb = to_cpu(xb),to_cpu(yb)
++
++edge_kernels.shape,edge_kernels.unsqueeze(1).shape
++
++edge_kernels = edge_kernels.unsqueeze(1)
++
++batch_features = F.conv2d(xb, edge_kernels)
++batch_features.shape
++
++show_image(batch_features[0,0]);
++
++# ### Strides and Padding
++
++# ### Understanding the Convolution Equations
++
++# ## Our First Convolutional Neural Network
++
++# ### Creating the CNN
++
++simple_net = nn.Sequential(
++    nn.Linear(28*28,30),
++    nn.ReLU(),
++    nn.Linear(30,1)
++)
++
++simple_net
++
++broken_cnn = sequential(
++    nn.Conv2d(1,30, kernel_size=3, padding=1),
++    nn.ReLU(),
++    nn.Conv2d(30,1, kernel_size=3, padding=1)
++)
++
++broken_cnn(xb).shape
++
++
++def conv(ni, nf, ks=3, act=True):
++    res = nn.Conv2d(ni, nf, stride=2, kernel_size=ks, padding=ks//2)
++    if act: res = nn.Sequential(res, nn.ReLU())
++    return res
++
++
++simple_cnn = sequential(
++    conv(1 ,4),            #14x14
++    conv(4 ,8),            #7x7
++    conv(8 ,16),           #4x4
++    conv(16,32),           #2x2
++    conv(32,2, act=False), #1x1
++    Flatten(),
++)
++
++simple_cnn(xb).shape
++
++learn = Learner(dls, simple_cnn, loss_func=F.cross_entropy, metrics=accuracy)
++
++learn.summary()
++
++learn.fit_one_cycle(2, 0.01)
++
++# ### Understanding Convolution Arithmetic
++
++m = learn.model[0]
++m
++
++m[0].weight.shape
++
++m[0].bias.shape
++
++# ### Receptive Fields
++
++# ### A Note About Twitter
++
++# ## Color Images
++
++im = image2tensor(Image.open('images/grizzly.jpg'))
++im.shape
++
++show_image(im);
++
++_,axs = subplots(1,3)
++for bear,ax,color in zip(im,axs,('Reds','Greens','Blues')):
++    show_image(255-bear, ax=ax, cmap=color)
++
++# ## Improving Training Stability
++
++path = untar_data(URLs.MNIST)
++
++#hide
++Path.BASE_PATH = path
++
++path.ls()
++
++
++# +
++def get_dls(bs=64):
++    return DataBlock(
++        blocks=(ImageBlock(cls=PILImageBW), CategoryBlock), 
++        get_items=get_image_files, 
++        splitter=GrandparentSplitter('training','testing'),
++        get_y=parent_label,
++        batch_tfms=Normalize()
++    ).dataloaders(path, bs=bs)
++
++dls = get_dls()
++# -
++
++dls.show_batch(max_n=9, figsize=(4,4))
++
++
++# ### A Simple Baseline
++
++def conv(ni, nf, ks=3, act=True):
++    res = nn.Conv2d(ni, nf, stride=2, kernel_size=ks, padding=ks//2)
++    if act: res = nn.Sequential(res, nn.ReLU())
++    return res
++
++
++def simple_cnn():
++    return sequential(
++        conv(1 ,8, ks=5),        #14x14
++        conv(8 ,16),             #7x7
++        conv(16,32),             #4x4
++        conv(32,64),             #2x2
++        conv(64,10, act=False),  #1x1
++        Flatten(),
++    )
++
++
++from fastai.callback.hook import *
++
++
++def fit(epochs=1):
++    learn = Learner(dls, simple_cnn(), loss_func=F.cross_entropy,
++                    metrics=accuracy, cbs=ActivationStats(with_hist=True))
++    learn.fit(epochs, 0.06)
++    return learn
++
++
++learn = fit()
++
++learn.activation_stats.plot_layer_stats(0)
++
++learn.activation_stats.plot_layer_stats(-2)
++
++# ### Increase Batch Size
++
++dls = get_dls(512)
++
++learn = fit()
++
++learn.activation_stats.plot_layer_stats(-2)
++
++
++# ### 1cycle Training
++
++def fit(epochs=1, lr=0.06):
++    learn = Learner(dls, simple_cnn(), loss_func=F.cross_entropy,
++                    metrics=accuracy, cbs=ActivationStats(with_hist=True))
++    learn.fit_one_cycle(epochs, lr)
++    return learn
++
++
++learn = fit()
++
++learn.recorder.plot_sched()
++
++learn.activation_stats.plot_layer_stats(-2)
++
++learn.activation_stats.color_dim(-2)
++
++learn.activation_stats.color_dim(-2)
++
++
++# ### Batch Normalization
++
++def conv(ni, nf, ks=3, act=True):
++    layers = [nn.Conv2d(ni, nf, stride=2, kernel_size=ks, padding=ks//2)]
++    layers.append(nn.BatchNorm2d(nf))
++    if act: layers.append(nn.ReLU())
++    return nn.Sequential(*layers)
++
++
++learn = fit()
++
++learn.activation_stats.color_dim(-4)
++
++learn = fit(5, lr=0.1)
++
++learn = fit(5, lr=0.1)
++
++# ## Conclusions
++
++# ## Questionnaire
++
++# 1. What is a "feature"?
++# 1. Write out the convolutional kernel matrix for a top edge detector.
++# 1. Write out the mathematical operation applied by a 3×3 kernel to a single pixel in an image.
++# 1. What is the value of a convolutional kernel apply to a 3×3 matrix of zeros?
++# 1. What is "padding"?
++# 1. What is "stride"?
++# 1. Create a nested list comprehension to complete any task that you choose.
++# 1. What are the shapes of the `input` and `weight` parameters to PyTorch's 2D convolution?
++# 1. What is a "channel"?
++# 1. What is the relationship between a convolution and a matrix multiplication?
++# 1. What is a "convolutional neural network"?
++# 1. What is the benefit of refactoring parts of your neural network definition?
++# 1. What is `Flatten`? Where does it need to be included in the MNIST CNN? Why?
++# 1. What does "NCHW" mean?
++# 1. Why does the third layer of the MNIST CNN have `7*7*(1168-16)` multiplications?
++# 1. What is a "receptive field"?
++# 1. What is the size of the receptive field of an activation after two stride 2 convolutions? Why?
++# 1. Run *conv-example.xlsx* yourself and experiment with *trace precedents*.
++# 1. Have a look at Jeremy or Sylvain's list of recent Twitter "like"s, and see if you find any interesting resources or ideas there.
++# 1. How is a color image represented as a tensor?
++# 1. How does a convolution work with a color input?
++# 1. What method can we use to see that data in `DataLoaders`?
++# 1. Why do we double the number of filters after each stride-2 conv?
++# 1. Why do we use a larger kernel in the first conv with MNIST (with `simple_cnn`)?
++# 1. What information does `ActivationStats` save for each layer?
++# 1. How can we access a learner's callback after training?
++# 1. What are the three statistics plotted by `plot_layer_stats`? What does the x-axis represent?
++# 1. Why are activations near zero problematic?
++# 1. What are the upsides and downsides of training with a larger batch size?
++# 1. Why should we avoid using a high learning rate at the start of training?
++# 1. What is 1cycle training?
++# 1. What are the benefits of training with a high learning rate?
++# 1. Why do we want to use a low learning rate at the end of training?
++# 1. What is "cyclical momentum"?
++# 1. What callback tracks hyperparameter values during training (along with other information)?
++# 1. What does one column of pixels in the `color_dim` plot represent?
++# 1. What does "bad training" look like in `color_dim`? Why?
++# 1. What trainable parameters does a batch normalization layer contain?
++# 1. What statistics are used to normalize in batch normalization during training? How about during validation?
++# 1. Why do models with batch normalization layers generalize better?
++
++# ### Further Research
++
++# 1. What features other than edge detectors have been used in computer vision (especially before deep learning became popular)?
++# 1. There are other normalization layers available in PyTorch. Try them out and see what works best. Learn about why other normalization layers have been developed, and how they differ from batch normalization.
++# 1. Try moving the activation function after the batch normalization layer in `conv`. Does it make a difference? See what you can find out about what order is recommended, and why.
++
++
+diff --git a/nbs/14_resnet.py b/nbs/14_resnet.py
+new file mode 100644
+index 0000000..e66b5f0
+--- /dev/null
++++ ./nbs/14_resnet.py
+@@ -0,0 +1,209 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# + hide_input=false
++#hide
++from fastbook import *
++
++
++# -
++
++# # ResNets
++
++# ## Going Back to Imagenette
++
++def get_data(url, presize, resize):
++    path = untar_data(url)
++    return DataBlock(
++        blocks=(ImageBlock, CategoryBlock), get_items=get_image_files, 
++        splitter=GrandparentSplitter(valid_name='val'),
++        get_y=parent_label, item_tfms=Resize(presize),
++        batch_tfms=[*aug_transforms(min_scale=0.5, size=resize),
++                    Normalize.from_stats(*imagenet_stats)],
++    ).dataloaders(path, bs=128)
++
++
++dls = get_data(URLs.IMAGENETTE_160, 160, 128)
++
++dls.show_batch(max_n=4)
++
++
++def avg_pool(x): return x.mean((2,3))
++
++
++def block(ni, nf): return ConvLayer(ni, nf, stride=2)
++def get_model():
++    return nn.Sequential(
++        block(3, 16),
++        block(16, 32),
++        block(32, 64),
++        block(64, 128),
++        block(128, 256),
++        nn.AdaptiveAvgPool2d(1),
++        Flatten(),
++        nn.Linear(256, dls.c))
++
++
++# +
++def get_learner(m):
++    return Learner(dls, m, loss_func=nn.CrossEntropyLoss(), metrics=accuracy
++                  ).to_fp16()
++
++learn = get_learner(get_model())
++# -
++
++learn.lr_find()
++
++learn.fit_one_cycle(5, 3e-3)
++
++
++# ## Building a Modern CNN: ResNet
++
++# ### Skip Connections
++
++class ResBlock(Module):
++    def __init__(self, ni, nf):
++        self.convs = nn.Sequential(
++            ConvLayer(ni,nf),
++            ConvLayer(nf,nf, norm_type=NormType.BatchZero))
++        
++    def forward(self, x): return x + self.convs(x)
++
++
++def _conv_block(ni,nf,stride):
++    return nn.Sequential(
++        ConvLayer(ni, nf, stride=stride),
++        ConvLayer(nf, nf, act_cls=None, norm_type=NormType.BatchZero))
++
++
++class ResBlock(Module):
++    def __init__(self, ni, nf, stride=1):
++        self.convs = _conv_block(ni,nf,stride)
++        self.idconv = noop if ni==nf else ConvLayer(ni, nf, 1, act_cls=None)
++        self.pool = noop if stride==1 else nn.AvgPool2d(2, ceil_mode=True)
++
++    def forward(self, x):
++        return F.relu(self.convs(x) + self.idconv(self.pool(x)))
++
++
++def block(ni,nf): return ResBlock(ni, nf, stride=2)
++learn = get_learner(get_model())
++
++learn.fit_one_cycle(5, 3e-3)
++
++
++def block(ni, nf):
++    return nn.Sequential(ResBlock(ni, nf, stride=2), ResBlock(nf, nf))
++
++
++learn = get_learner(get_model())
++learn.fit_one_cycle(5, 3e-3)
++
++
++# ### A State-of-the-Art ResNet
++
++def _resnet_stem(*sizes):
++    return [
++        ConvLayer(sizes[i], sizes[i+1], 3, stride = 2 if i==0 else 1)
++            for i in range(len(sizes)-1)
++    ] + [nn.MaxPool2d(kernel_size=3, stride=2, padding=1)]
++
++
++_resnet_stem(3,32,32,64)
++
++
++class ResNet(nn.Sequential):
++    def __init__(self, n_out, layers, expansion=1):
++        stem = _resnet_stem(3,32,32,64)
++        self.block_szs = [64, 64, 128, 256, 512]
++        for i in range(1,5): self.block_szs[i] *= expansion
++        blocks = [self._make_layer(*o) for o in enumerate(layers)]
++        super().__init__(*stem, *blocks,
++                         nn.AdaptiveAvgPool2d(1), Flatten(),
++                         nn.Linear(self.block_szs[-1], n_out))
++    
++    def _make_layer(self, idx, n_layers):
++        stride = 1 if idx==0 else 2
++        ch_in,ch_out = self.block_szs[idx:idx+2]
++        return nn.Sequential(*[
++            ResBlock(ch_in if i==0 else ch_out, ch_out, stride if i==0 else 1)
++            for i in range(n_layers)
++        ])
++
++
++rn = ResNet(dls.c, [2,2,2,2])
++
++learn = get_learner(rn)
++learn.fit_one_cycle(5, 3e-3)
++
++
++# ### Bottleneck Layers
++
++def _conv_block(ni,nf,stride):
++    return nn.Sequential(
++        ConvLayer(ni, nf//4, 1),
++        ConvLayer(nf//4, nf//4, stride=stride), 
++        ConvLayer(nf//4, nf, 1, act_cls=None, norm_type=NormType.BatchZero))
++
++
++dls = get_data(URLs.IMAGENETTE_320, presize=320, resize=224)
++
++rn = ResNet(dls.c, [3,4,6,3], 4)
++
++learn = get_learner(rn)
++learn.fit_one_cycle(20, 3e-3)
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. How did we get to a single vector of activations in the CNNs used for MNIST in previous chapters? Why isn't that suitable for Imagenette?
++# 1. What do we do for Imagenette instead?
++# 1. What is "adaptive pooling"?
++# 1. What is "average pooling"?
++# 1. Why do we need `Flatten` after an adaptive average pooling layer?
++# 1. What is a "skip connection"?
++# 1. Why do skip connections allow us to train deeper models?
++# 1. What does <<resnet_depth>> show? How did that lead to the idea of skip connections?
++# 1. What is "identity mapping"?
++# 1. What is the basic equation for a ResNet block (ignoring batchnorm and ReLU layers)?
++# 1. What do ResNets have to do with residuals?
++# 1. How do we deal with the skip connection when there is a stride-2 convolution? How about when the number of filters changes?
++# 1. How can we express a 1×1 convolution in terms of a vector dot product?
++# 1. Create a `1x1 convolution` with `F.conv2d` or `nn.Conv2d` and apply it to an image. What happens to the `shape` of the image?
++# 1. What does the `noop` function return?
++# 1. Explain what is shown in <<resnet_surface>>.
++# 1. When is top-5 accuracy a better metric than top-1 accuracy?
++# 1. What is the "stem" of a CNN?
++# 1. Why do we use plain convolutions in the CNN stem, instead of ResNet blocks?
++# 1. How does a bottleneck block differ from a plain ResNet block?
++# 1. Why is a bottleneck block faster?
++# 1. How do fully convolutional nets (and nets with adaptive pooling in general) allow for progressive resizing?
++
++# ### Further Research
++
++# 1. Try creating a fully convolutional net with adaptive average pooling for MNIST (note that you'll need fewer stride-2 layers). How does it compare to a network without such a pooling layer?
++# 1. In <<chapter_foundations>> we introduce *Einstein summation notation*. Skip ahead to see how this works, and then write an implementation of the 1×1 convolution operation using `torch.einsum`. Compare it to the same operation using `torch.conv2d`.
++# 1. Write a "top-5 accuracy" function using plain PyTorch or plain Python.
++# 1. Train a model on Imagenette for more epochs, with and without label smoothing. Take a look at the Imagenette leaderboards and see how close you can get to the best results shown. Read the linked pages describing the leading approaches.
++
++
+diff --git a/nbs/15_arch_details.py b/nbs/15_arch_details.py
+new file mode 100644
+index 0000000..4def9c4
+--- /dev/null
++++ ./nbs/15_arch_details.py
+@@ -0,0 +1,155 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # Application Architectures Deep Dive
++
++# ## Computer Vision
++
++# ### cnn_learner
++
++model_meta[resnet50]
++
++create_head(20,2)
++
++# ### unet_learner
++
++# ### A Siamese Network
++
++# +
++#hide
++from fastai.vision.all import *
++path = untar_data(URLs.PETS)
++files = get_image_files(path/"images")
++
++class SiameseImage(Tuple):
++    def show(self, ctx=None, **kwargs): 
++        img1,img2,same_breed = self
++        if not isinstance(img1, Tensor):
++            if img2.size != img1.size: img2 = img2.resize(img1.size)
++            t1,t2 = tensor(img1),tensor(img2)
++            t1,t2 = t1.permute(2,0,1),t2.permute(2,0,1)
++        else: t1,t2 = img1,img2
++        line = t1.new_zeros(t1.shape[0], t1.shape[1], 10)
++        return show_image(torch.cat([t1,line,t2], dim=2), 
++                          title=same_breed, ctx=ctx)
++    
++def label_func(fname):
++    return re.match(r'^(.*)_\d+.jpg$', fname.name).groups()[0]
++
++class SiameseTransform(Transform):
++    def __init__(self, files, label_func, splits):
++        self.labels = files.map(label_func).unique()
++        self.lbl2files = {l: L(f for f in files if label_func(f) == l) for l in self.labels}
++        self.label_func = label_func
++        self.valid = {f: self._draw(f) for f in files[splits[1]]}
++        
++    def encodes(self, f):
++        f2,t = self.valid.get(f, self._draw(f))
++        img1,img2 = PILImage.create(f),PILImage.create(f2)
++        return SiameseImage(img1, img2, t)
++    
++    def _draw(self, f):
++        same = random.random() < 0.5
++        cls = self.label_func(f)
++        if not same: cls = random.choice(L(l for l in self.labels if l != cls)) 
++        return random.choice(self.lbl2files[cls]),same
++    
++splits = RandomSplitter()(files)
++tfm = SiameseTransform(files, label_func, splits)
++tls = TfmdLists(files, tfm, splits=splits)
++dls = tls.dataloaders(after_item=[Resize(224), ToTensor], 
++    after_batch=[IntToFloatTensor, Normalize.from_stats(*imagenet_stats)])
++
++
++# -
++
++class SiameseModel(Module):
++    def __init__(self, encoder, head):
++        self.encoder,self.head = encoder,head
++    
++    def forward(self, x1, x2):
++        ftrs = torch.cat([self.encoder(x1), self.encoder(x2)], dim=1)
++        return self.head(ftrs)
++
++
++encoder = create_body(resnet34, cut=-2)
++
++head = create_head(512*4, 2, ps=0.5)
++
++model = SiameseModel(encoder, head)
++
++
++def loss_func(out, targ):
++    return nn.CrossEntropyLoss()(out, targ.long())
++
++
++def siamese_splitter(model):
++    return [params(model.encoder), params(model.head)]
++
++
++learn = Learner(dls, model, loss_func=loss_func, 
++                splitter=siamese_splitter, metrics=accuracy)
++learn.freeze()
++
++learn.fit_one_cycle(4, 3e-3)
++
++learn.unfreeze()
++learn.fit_one_cycle(4, slice(1e-6,1e-4))
++
++# ## Natural Language Processing
++
++# ## Tabular
++
++# ## Wrapping Up Architectures
++
++# ## Questionnaire
++
++# 1. What is the "head" of a neural net?
++# 1. What is the "body" of a neural net?
++# 1. What is "cutting" a neural net? Why do we need to do this for transfer learning?
++# 1. What is `model_meta`? Try printing it to see what's inside.
++# 1. Read the source code for `create_head` and make sure you understand what each line does.
++# 1. Look at the output of `create_head` and make sure you understand why each layer is there, and how the `create_head` source created it.
++# 1. Figure out how to change the dropout, layer size, and number of layers created by `create_cnn`, and see if you can find values that result in better accuracy from the pet recognizer.
++# 1. What does `AdaptiveConcatPool2d` do?
++# 1. What is "nearest neighbor interpolation"? How can it be used to upsample convolutional activations?
++# 1. What is a "transposed convolution"? What is another name for it?
++# 1. Create a conv layer with `transpose=True` and apply it to an image. Check the output shape.
++# 1. Draw the U-Net architecture.
++# 1. What is "BPTT for Text Classification" (BPT3C)?
++# 1. How do we handle different length sequences in BPT3C?
++# 1. Try to run each line of `TabularModel.forward` separately, one line per cell, in a notebook, and look at the input and output shapes at each step.
++# 1. How is `self.layers` defined in `TabularModel`?
++# 1. What are the five steps for preventing over-fitting?
++# 1. Why don't we reduce architecture complexity before trying other approaches to preventing overfitting?
++
++# ### Further Research
++
++# 1. Write your own custom head and try training the pet recognizer with it. See if you can get a better result than fastai's default.
++# 1. Try switching between `AdaptiveConcatPool2d` and `AdaptiveAvgPool2d` in a CNN head and see what difference it makes.
++# 1. Write your own custom splitter to create a separate parameter group for every ResNet block, and a separate group for the stem. Try training with it, and see if it improves the pet recognizer.
++# 1. Read the online chapter about generative image models, and create your own colorizer, super-resolution model, or style transfer model.
++# 1. Create a custom head using nearest neighbor interpolation and use it to do segmentation on CamVid.
++
++
+diff --git a/nbs/16_accel_sgd.py b/nbs/16_accel_sgd.py
+new file mode 100644
+index 0000000..3281fe6
+--- /dev/null
++++ ./nbs/16_accel_sgd.py
+@@ -0,0 +1,230 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# + hide_input=false
++#hide
++from fastbook import *
++
++
++# -
++
++# # The Training Process
++
++# ## Establishing a Baseline
++
++def get_data(url, presize, resize):
++    path = untar_data(url)
++    return DataBlock(
++        blocks=(ImageBlock, CategoryBlock), get_items=get_image_files, 
++        splitter=GrandparentSplitter(valid_name='val'),
++        get_y=parent_label, item_tfms=Resize(presize),
++        batch_tfms=[*aug_transforms(min_scale=0.5, size=resize),
++                    Normalize.from_stats(*imagenet_stats)],
++    ).dataloaders(path, bs=128)
++
++
++dls = get_data(URLs.IMAGENETTE_160, 160, 128)
++
++
++def get_learner(**kwargs):
++    return cnn_learner(dls, resnet34, pretrained=False,
++                    metrics=accuracy, **kwargs).to_fp16()
++
++
++learn = get_learner()
++learn.fit_one_cycle(3, 0.003)
++
++learn = get_learner(opt_func=SGD)
++
++learn.lr_find()
++
++learn.fit_one_cycle(3, 0.03, moms=(0,0,0))
++
++
++# ## A Generic Optimizer
++
++def sgd_cb(p, lr, **kwargs): p.data.add_(-lr, p.grad.data)
++
++
++opt_func = partial(Optimizer, cbs=[sgd_cb])
++
++learn = get_learner(opt_func=opt_func)
++learn.fit(3, 0.03)
++
++# ## Momentum
++
++# + hide_input=true
++x = np.linspace(-4, 4, 100)
++y = 1 - (x/3) ** 2
++x1 = x + np.random.randn(100) * 0.1
++y1 = y + np.random.randn(100) * 0.1
++plt.scatter(x1,y1)
++idx = x1.argsort()
++beta,avg,res = 0.7,0,[]
++for i in idx:
++    avg = beta * avg + (1-beta) * y1[i]
++    res.append(avg/(1-beta**(i+1)))
++plt.plot(x1[idx],np.array(res), color='red');
++
++# + hide_input=true
++x = np.linspace(-4, 4, 100)
++y = 1 - (x/3) ** 2
++x1 = x + np.random.randn(100) * 0.1
++y1 = y + np.random.randn(100) * 0.1
++_,axs = plt.subplots(2,2, figsize=(12,8))
++betas = [0.5,0.7,0.9,0.99]
++idx = x1.argsort()
++for beta,ax in zip(betas, axs.flatten()):
++    ax.scatter(x1,y1)
++    avg,res = 0,[]
++    for i in idx:
++        avg = beta * avg + (1-beta) * y1[i]
++        res.append(avg)#/(1-beta**(i+1)))
++    ax.plot(x1[idx],np.array(res), color='red');
++    ax.set_title(f'beta={beta}')
++
++
++# -
++
++def average_grad(p, mom, grad_avg=None, **kwargs):
++    if grad_avg is None: grad_avg = torch.zeros_like(p.grad.data)
++    return {'grad_avg': grad_avg*mom + p.grad.data}
++
++
++def momentum_step(p, lr, grad_avg, **kwargs): p.data.add_(-lr, grad_avg)
++
++
++opt_func = partial(Optimizer, cbs=[average_grad,momentum_step], mom=0.9)
++
++learn = get_learner(opt_func=opt_func)
++learn.fit_one_cycle(3, 0.03)
++
++learn.recorder.plot_sched()
++
++
++# ## RMSProp
++
++def average_sqr_grad(p, sqr_mom, sqr_avg=None, **kwargs):
++    if sqr_avg is None: sqr_avg = torch.zeros_like(p.grad.data)
++    return {'sqr_avg': sqr_avg*sqr_mom + p.grad.data**2}
++
++
++# +
++def rms_prop_step(p, lr, sqr_avg, eps, grad_avg=None, **kwargs):
++    denom = sqr_avg.sqrt().add_(eps)
++    p.data.addcdiv_(-lr, p.grad, denom)
++
++opt_func = partial(Optimizer, cbs=[average_sqr_grad,rms_prop_step],
++                   sqr_mom=0.99, eps=1e-7)
++# -
++
++learn = get_learner(opt_func=opt_func)
++learn.fit_one_cycle(3, 0.003)
++
++
++# ## Adam
++
++# ## Decoupled Weight Decay
++
++# ## Callbacks
++
++# ### Creating a Callback
++
++class ModelResetter(Callback):
++    def begin_train(self):    self.model.reset()
++    def begin_validate(self): self.model.reset()
++
++
++class RNNRegularizer(Callback):
++    def __init__(self, alpha=0., beta=0.): self.alpha,self.beta = alpha,beta
++
++    def after_pred(self):
++        self.raw_out,self.out = self.pred[1],self.pred[2]
++        self.learn.pred = self.pred[0]
++
++    def after_loss(self):
++        if not self.training: return
++        if self.alpha != 0.:
++            self.learn.loss += self.alpha * self.out[-1].float().pow(2).mean()
++        if self.beta != 0.:
++            h = self.raw_out[-1]
++            if len(h)>1:
++                self.learn.loss += self.beta * (h[:,1:] - h[:,:-1]
++                                               ).float().pow(2).mean()
++
++
++# ### Callback Ordering and Exceptions
++
++class TerminateOnNaNCallback(Callback):
++    run_before=Recorder
++    def after_batch(self):
++        if torch.isinf(self.loss) or torch.isnan(self.loss):
++            raise CancelFitException
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. What is the equation for a step of SGD, in math or code (as you prefer)?
++# 1. What do we pass to `cnn_learner` to use a non-default optimizer?
++# 1. What are optimizer callbacks?
++# 1. What does `zero_grad` do in an optimizer?
++# 1. What does `step` do in an optimizer? How is it implemented in the general optimizer?
++# 1. Rewrite `sgd_cb` to use the `+=` operator, instead of `add_`.
++# 1. What is "momentum"? Write out the equation.
++# 1. What's a physical analogy for momentum? How does it apply in our model training settings?
++# 1. What does a bigger value for momentum do to the gradients?
++# 1. What are the default values of momentum for 1cycle training?
++# 1. What is RMSProp? Write out the equation.
++# 1. What do the squared values of the gradients indicate?
++# 1. How does Adam differ from momentum and RMSProp?
++# 1. Write out the equation for Adam.
++# 1. Calculate the values of `unbias_avg` and `w.avg` for a few batches of dummy values.
++# 1. What's the impact of having a high `eps` in Adam?
++# 1. Read through the optimizer notebook in fastai's repo, and execute it.
++# 1. In what situations do dynamic learning rate methods like Adam change the behavior of weight decay?
++# 1. What are the four steps of a training loop?
++# 1. Why is using callbacks better than writing a new training loop for each tweak you want to add?
++# 1. What aspects of the design of fastai's callback system make it as flexible as copying and pasting bits of code?
++# 1. How can you get the list of events available to you when writing a callback?
++# 1. Write the `ModelResetter` callback (without peeking).
++# 1. How can you access the necessary attributes of the training loop inside a callback? When can you use or not use the shortcuts that go with them?
++# 1. How can a callback influence the control flow of the training loop.
++# 1. Write the `TerminateOnNaN` callback (without peeking, if possible).
++# 1. How do you make sure your callback runs after or before another callback?
++
++# ### Further Research
++
++# 1. Look up the "Rectified Adam" paper, implement it using the general optimizer framework, and try it out. Search for other recent optimizers that work well in practice, and pick one to implement.
++# 1. Look at the mixed-precision callback with the documentation. Try to understand what each event and line of code does.
++# 1. Implement your own version of ther learning rate finder from scratch. Compare it with fastai's version.
++# 1. Look at the source code of the callbacks that ship with fastai. See if you can find one that's similar to what you're looking to do, to get some inspiration.
++
++# ## Foundations of Deep Learning: Wrap up
++
++# Congratulations, you have made it to the end of the "foundations of deep learning" section of the book! You now understand how all of fastai's applications and most important architectures are built, and the recommended ways to train them—and you have all the information you need to build these from scratch. While you probably won't need to create your own training loop, or batchnorm layer, for instance, knowing what is going on behind the scenes is very helpful for debugging, profiling, and deploying your solutions.
++#
++# Since you understand the foundations of fastai's applications now, be sure to spend some time digging through the source notebooks and running and experimenting with parts of them. This will give you a better idea of how everything in fastai is developed.
++#
++# In the next section, we will be looking even further under the covers: we'll explore how the actual forward and backward passes of a neural network are done, and we will see what tools are at our disposal to get better performance. We will then continue with a project that brings together all the material in the book, which we will use to build a tool for interpreting convolutional neural networks. Last but not least, we'll finish by building fastai's `Learner` class from scratch.
++
++
+diff --git a/nbs/17_foundations.py b/nbs/17_foundations.py
+new file mode 100644
+index 0000000..988a2bf
+--- /dev/null
++++ ./nbs/17_foundations.py
+@@ -0,0 +1,498 @@
++# -*- coding: utf-8 -*-
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# + hide_input=false
++#hide
++from fastai.gen_doc.nbdoc import *
++# -
++
++# # A Neural Net from the Foundations
++
++# ## Building a Neural Net Layer from Scratch
++
++# ### Modeling a Neuron
++
++# ### Matrix Multiplication from Scratch
++
++import torch
++from torch import tensor
++
++
++def matmul(a,b):
++    ar,ac = a.shape # n_rows * n_cols
++    br,bc = b.shape
++    assert ac==br
++    c = torch.zeros(ar, bc)
++    for i in range(ar):
++        for j in range(bc):
++            for k in range(ac): c[i,j] += a[i,k] * b[k,j]
++    return c
++
++
++m1 = torch.randn(5,28*28)
++m2 = torch.randn(784,10)
++
++# %time t1=matmul(m1, m2)
++
++# %timeit -n 20 t2=m1@m2
++
++# ### Elementwise Arithmetic
++
++a = tensor([10., 6, -4])
++b = tensor([2., 8, 7])
++a + b
++
++a < b
++
++(a < b).all(), (a==b).all()
++
++(a + b).mean().item()
++
++m = tensor([[1., 2, 3], [4,5,6], [7,8,9]])
++m*m
++
++n = tensor([[1., 2, 3], [4,5,6]])
++m*n
++
++
++def matmul(a,b):
++    ar,ac = a.shape
++    br,bc = b.shape
++    assert ac==br
++    c = torch.zeros(ar, bc)
++    for i in range(ar):
++        for j in range(bc): c[i,j] = (a[i] * b[:,j]).sum()
++    return c
++
++
++# %timeit -n 20 t3 = matmul(m1,m2)
++
++# ### Broadcasting
++
++# #### Broadcasting with a scalar
++
++a = tensor([10., 6, -4])
++a > 0
++
++m = tensor([[1., 2, 3], [4,5,6], [7,8,9]])
++(m - 5) / 2.73
++
++# #### Broadcasting a vector to a matrix
++
++c = tensor([10.,20,30])
++m = tensor([[1., 2, 3], [4,5,6], [7,8,9]])
++m.shape,c.shape
++
++m + c
++
++c.expand_as(m)
++
++t = c.expand_as(m)
++t.storage()
++
++t.stride(), t.shape
++
++c + m
++
++c = tensor([10.,20,30])
++m = tensor([[1., 2, 3], [4,5,6]])
++c+m
++
++c = tensor([10.,20])
++m = tensor([[1., 2, 3], [4,5,6]])
++c+m
++
++c = tensor([10.,20,30])
++m = tensor([[1., 2, 3], [4,5,6], [7,8,9]])
++c = c.unsqueeze(1)
++m.shape,c.shape
++
++c+m
++
++t = c.expand_as(m)
++t.storage()
++
++t.stride(), t.shape
++
++c = tensor([10.,20,30])
++c.shape, c.unsqueeze(0).shape,c.unsqueeze(1).shape
++
++c.shape, c[None,:].shape,c[:,None].shape
++
++c[None].shape,c[...,None].shape
++
++
++def matmul(a,b):
++    ar,ac = a.shape
++    br,bc = b.shape
++    assert ac==br
++    c = torch.zeros(ar, bc)
++    for i in range(ar):
++#       c[i,j] = (a[i,:]          * b[:,j]).sum() # previous
++        c[i]   = (a[i  ].unsqueeze(-1) * b).sum(dim=0)
++    return c
++
++
++# %timeit -n 20 t4 = matmul(m1,m2)
++
++# #### Broadcasting rules
++
++# ### Einstein Summation
++
++def matmul(a,b): return torch.einsum('ik,kj->ij', a, b)
++
++
++# %timeit -n 20 t5 = matmul(m1,m2)
++
++# ## The Forward and Backward Passes
++
++# ### Defining and Initializing a Layer
++
++def lin(x, w, b): return x @ w + b
++
++
++x = torch.randn(200, 100)
++y = torch.randn(200)
++
++w1 = torch.randn(100,50)
++b1 = torch.zeros(50)
++w2 = torch.randn(50,1)
++b2 = torch.zeros(1)
++
++l1 = lin(x, w1, b1)
++l1.shape
++
++l1.mean(), l1.std()
++
++x = torch.randn(200, 100)
++for i in range(50): x = x @ torch.randn(100,100)
++x[0:5,0:5]
++
++x = torch.randn(200, 100)
++for i in range(50): x = x @ (torch.randn(100,100) * 0.01)
++x[0:5,0:5]
++
++x = torch.randn(200, 100)
++for i in range(50): x = x @ (torch.randn(100,100) * 0.1)
++x[0:5,0:5]
++
++x.std()
++
++x = torch.randn(200, 100)
++y = torch.randn(200)
++
++from math import sqrt
++w1 = torch.randn(100,50) / sqrt(100)
++b1 = torch.zeros(50)
++w2 = torch.randn(50,1) / sqrt(50)
++b2 = torch.zeros(1)
++
++l1 = lin(x, w1, b1)
++l1.mean(),l1.std()
++
++
++def relu(x): return x.clamp_min(0.)
++
++
++l2 = relu(l1)
++l2.mean(),l2.std()
++
++x = torch.randn(200, 100)
++for i in range(50): x = relu(x @ (torch.randn(100,100) * 0.1))
++x[0:5,0:5]
++
++x = torch.randn(200, 100)
++for i in range(50): x = relu(x @ (torch.randn(100,100) * sqrt(2/100)))
++x[0:5,0:5]
++
++x = torch.randn(200, 100)
++y = torch.randn(200)
++
++w1 = torch.randn(100,50) * sqrt(2 / 100)
++b1 = torch.zeros(50)
++w2 = torch.randn(50,1) * sqrt(2 / 50)
++b2 = torch.zeros(1)
++
++l1 = lin(x, w1, b1)
++l2 = relu(l1)
++l2.mean(), l2.std()
++
++
++def model(x):
++    l1 = lin(x, w1, b1)
++    l2 = relu(l1)
++    l3 = lin(l2, w2, b2)
++    return l3
++
++
++out = model(x)
++out.shape
++
++
++def mse(output, targ): return (output.squeeze(-1) - targ).pow(2).mean()
++
++
++loss = mse(out, y)
++
++
++# ### Gradients and the Backward Pass
++
++def mse_grad(inp, targ): 
++    # grad of loss with respect to output of previous layer
++    inp.g = 2. * (inp.squeeze() - targ).unsqueeze(-1) / inp.shape[0]
++
++
++def relu_grad(inp, out):
++    # grad of relu with respect to input activations
++    inp.g = (inp>0).float() * out.g
++
++
++def lin_grad(inp, out, w, b):
++    # grad of matmul with respect to input
++    inp.g = out.g @ w.t()
++    w.g = inp.t() @ out.g
++    b.g = out.g.sum(0)
++
++
++# ### Sidebar: SymPy
++
++from sympy import symbols,diff
++sx,sy = symbols('sx sy')
++diff(sx**2, sx)
++
++
++# ### End sidebar
++
++def forward_and_backward(inp, targ):
++    # forward pass:
++    l1 = inp @ w1 + b1
++    l2 = relu(l1)
++    out = l2 @ w2 + b2
++    # we don't actually need the loss in backward!
++    loss = mse(out, targ)
++    
++    # backward pass:
++    mse_grad(out, targ)
++    lin_grad(l2, out, w2, b2)
++    relu_grad(l1, l2)
++    lin_grad(inp, l1, w1, b1)
++
++
++# ### Refactoring the Model
++
++class Relu():
++    def __call__(self, inp):
++        self.inp = inp
++        self.out = inp.clamp_min(0.)
++        return self.out
++    
++    def backward(self): self.inp.g = (self.inp>0).float() * self.out.g
++
++
++class Lin():
++    def __init__(self, w, b): self.w,self.b = w,b
++        
++    def __call__(self, inp):
++        self.inp = inp
++        self.out = inp@self.w + self.b
++        return self.out
++    
++    def backward(self):
++        self.inp.g = self.out.g @ self.w.t()
++        self.w.g = self.inp.t() @ self.out.g
++        self.b.g = self.out.g.sum(0)
++
++
++class Mse():
++    def __call__(self, inp, targ):
++        self.inp = inp
++        self.targ = targ
++        self.out = (inp.squeeze() - targ).pow(2).mean()
++        return self.out
++    
++    def backward(self):
++        x = (self.inp.squeeze()-self.targ).unsqueeze(-1)
++        self.inp.g = 2.*x/self.targ.shape[0]
++
++
++class Model():
++    def __init__(self, w1, b1, w2, b2):
++        self.layers = [Lin(w1,b1), Relu(), Lin(w2,b2)]
++        self.loss = Mse()
++        
++    def __call__(self, x, targ):
++        for l in self.layers: x = l(x)
++        return self.loss(x, targ)
++    
++    def backward(self):
++        self.loss.backward()
++        for l in reversed(self.layers): l.backward()
++
++
++model = Model(w1, b1, w2, b2)
++
++loss = model(x, y)
++
++model.backward()
++
++
++# ### Going to PyTorch
++
++class LayerFunction():
++    def __call__(self, *args):
++        self.args = args
++        self.out = self.forward(*args)
++        return self.out
++    
++    def forward(self):  raise Exception('not implemented')
++    def bwd(self):      raise Exception('not implemented')
++    def backward(self): self.bwd(self.out, *self.args)
++
++
++class Relu(LayerFunction):
++    def forward(self, inp): return inp.clamp_min(0.)
++    def bwd(self, out, inp): inp.g = (inp>0).float() * out.g
++
++
++class Lin(LayerFunction):
++    def __init__(self, w, b): self.w,self.b = w,b
++        
++    def forward(self, inp): return inp@self.w + self.b
++    
++    def bwd(self, out, inp):
++        inp.g = out.g @ self.w.t()
++        self.w.g = self.inp.t() @ self.out.g
++        self.b.g = out.g.sum(0)
++
++
++class Mse(LayerFunction):
++    def forward (self, inp, targ): return (inp.squeeze() - targ).pow(2).mean()
++    def bwd(self, out, inp, targ): 
++        inp.g = 2*(inp.squeeze()-targ).unsqueeze(-1) / targ.shape[0]
++
++
++# +
++from torch.autograd import Function
++
++class MyRelu(Function):
++    @staticmethod
++    def forward(ctx, i):
++        result = i.clamp_min(0.)
++        ctx.save_for_backward(i)
++        return result
++    
++    @staticmethod
++    def backward(ctx, grad_output):
++        i, = ctx.saved_tensors
++        return grad_output * (i>0).float()
++
++
++# +
++import torch.nn as nn
++
++class LinearLayer(nn.Module):
++    def __init__(self, n_in, n_out):
++        super().__init__()
++        self.weight = nn.Parameter(torch.randn(n_out, n_in) * sqrt(2/n_in))
++        self.bias = nn.Parameter(torch.zeros(n_out))
++    
++    def forward(self, x): return x @ self.weight.t() + self.bias
++
++
++# -
++
++lin = LinearLayer(10,2)
++p1,p2 = lin.parameters()
++p1.shape,p2.shape
++
++
++class Model(nn.Module):
++    def __init__(self, n_in, nh, n_out):
++        super().__init__()
++        self.layers = nn.Sequential(
++            nn.Linear(n_in,nh), nn.ReLU(), nn.Linear(nh,n_out))
++        self.loss = mse
++        
++    def forward(self, x, targ): return self.loss(self.layers(x).squeeze(), targ)
++
++
++class Model(Module):
++    def __init__(self, n_in, nh, n_out):
++        self.layers = nn.Sequential(
++            nn.Linear(n_in,nh), nn.ReLU(), nn.Linear(nh,n_out))
++        self.loss = mse
++        
++    def forward(self, x, targ): return self.loss(self.layers(x).squeeze(), targ)
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. Write the Python code to implement a single neuron.
++# 1. Write the Python code to implement ReLU.
++# 1. Write the Python code for a dense layer in terms of matrix multiplication.
++# 1. Write the Python code for a dense layer in plain Python (that is, with list comprehensions and functionality built into Python).
++# 1. What is the "hidden size" of a layer?
++# 1. What does the `t` method do in PyTorch?
++# 1. Why is matrix multiplication written in plain Python very slow?
++# 1. In `matmul`, why is `ac==br`?
++# 1. In Jupyter Notebook, how do you measure the time taken for a single cell to execute?
++# 1. What is "elementwise arithmetic"?
++# 1. Write the PyTorch code to test whether every element of `a` is greater than the corresponding element of `b`.
++# 1. What is a rank-0 tensor? How do you convert it to a plain Python data type?
++# 1. What does this return, and why? `tensor([1,2]) + tensor([1])`
++# 1. What does this return, and why? `tensor([1,2]) + tensor([1,2,3])`
++# 1. How does elementwise arithmetic help us speed up `matmul`?
++# 1. What are the broadcasting rules?
++# 1. What is `expand_as`? Show an example of how it can be used to match the results of broadcasting.
++# 1. How does `unsqueeze` help us to solve certain broadcasting problems?
++# 1. How can we use indexing to do the same operation as `unsqueeze`?
++# 1. How do we show the actual contents of the memory used for a tensor?
++# 1. When adding a vector of size 3 to a matrix of size 3×3, are the elements of the vector added to each row or each column of the matrix? (Be sure to check your answer by running this code in a notebook.)
++# 1. Do broadcasting and `expand_as` result in increased memory use? Why or why not?
++# 1. Implement `matmul` using Einstein summation.
++# 1. What does a repeated index letter represent on the left-hand side of einsum?
++# 1. What are the three rules of Einstein summation notation? Why?
++# 1. What are the forward pass and backward pass of a neural network?
++# 1. Why do we need to store some of the activations calculated for intermediate layers in the forward pass?
++# 1. What is the downside of having activations with a standard deviation too far away from 1?
++# 1. How can weight initialization help avoid this problem?
++# 1. What is the formula to initialize weights such that we get a standard deviation of 1 for a plain linear layer, and for a linear layer followed by ReLU?
++# 1. Why do we sometimes have to use the `squeeze` method in loss functions?
++# 1. What does the argument to the `squeeze` method do? Why might it be important to include this argument, even though PyTorch does not require it?
++# 1. What is the "chain rule"? Show the equation in either of the two forms presented in this chapter.
++# 1. Show how to calculate the gradients of `mse(lin(l2, w2, b2), y)` using the chain rule.
++# 1. What is the gradient of ReLU? Show it in math or code. (You shouldn't need to commit this to memory—try to figure it using your knowledge of the shape of the function.)
++# 1. In what order do we need to call the `*_grad` functions in the backward pass? Why?
++# 1. What is `__call__`?
++# 1. What methods must we implement when writing a `torch.autograd.Function`?
++# 1. Write `nn.Linear` from scratch, and test it works.
++# 1. What is the difference between `nn.Module` and fastai's `Module`?
++
++# ### Further Research
++
++# 1. Implement ReLU as a `torch.autograd.Function` and train a model with it.
++# 1. If you are mathematically inclined, find out what the gradients of a linear layer are in mathematical notation. Map that to the implementation we saw in this chapter.
++# 1. Learn about the `unfold` method in PyTorch, and use it along with matrix multiplication to implement your own 2D convolution function. Then train a CNN that uses it.
++# 1. Implement everything in this chapter using NumPy instead of PyTorch. 
++
++
+diff --git a/nbs/18_CAM.py b/nbs/18_CAM.py
+new file mode 100644
+index 0000000..751a18a
+--- /dev/null
++++ ./nbs/18_CAM.py
+@@ -0,0 +1,149 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# + hide_input=false
++#hide
++from fastbook import *
++# -
++
++# # CNN Interpretation with CAM
++
++# ## CAM and Hooks
++
++path = untar_data(URLs.PETS)/'images'
++def is_cat(x): return x[0].isupper()
++dls = ImageDataLoaders.from_name_func(
++    path, get_image_files(path), valid_pct=0.2, seed=21,
++    label_func=is_cat, item_tfms=Resize(224))
++learn = cnn_learner(dls, resnet34, metrics=error_rate)
++learn.fine_tune(1)
++
++img = PILImage.create('images/chapter1_cat_example.jpg')
++x, = first(dls.test_dl([img]))
++
++
++class Hook():
++    def hook_func(self, m, i, o): self.stored = o.detach().clone()
++
++
++hook_output = Hook()
++hook = learn.model[0].register_forward_hook(hook_output.hook_func)
++
++with torch.no_grad(): output = learn.model.eval()(x)
++
++act = hook_output.stored[0]
++
++F.softmax(output, dim=-1)
++
++dls.vocab
++
++x.shape
++
++cam_map = torch.einsum('ck,kij->cij', learn.model[1][-1].weight, act)
++cam_map.shape
++
++x_dec = TensorImage(dls.train.decode((x,))[0][0])
++_,ax = plt.subplots()
++x_dec.show(ctx=ax)
++ax.imshow(cam_map[1].detach().cpu(), alpha=0.6, extent=(0,224,224,0),
++              interpolation='bilinear', cmap='magma');
++
++hook.remove()
++
++
++class Hook():
++    def __init__(self, m):
++        self.hook = m.register_forward_hook(self.hook_func)   
++    def hook_func(self, m, i, o): self.stored = o.detach().clone()
++    def __enter__(self, *args): return self
++    def __exit__(self, *args): self.hook.remove()
++
++
++with Hook(learn.model[0]) as hook:
++    with torch.no_grad(): output = learn.model.eval()(x.cuda())
++    act = hook.stored
++
++
++# ## Gradient CAM
++
++class HookBwd():
++    def __init__(self, m):
++        self.hook = m.register_backward_hook(self.hook_func)   
++    def hook_func(self, m, gi, go): self.stored = go[0].detach().clone()
++    def __enter__(self, *args): return self
++    def __exit__(self, *args): self.hook.remove()
++
++
++cls = 1
++with HookBwd(learn.model[0]) as hookg:
++    with Hook(learn.model[0]) as hook:
++        output = learn.model.eval()(x.cuda())
++        act = hook.stored
++    output[0,cls].backward()
++    grad = hookg.stored
++
++w = grad[0].mean(dim=[1,2], keepdim=True)
++cam_map = (w * act[0]).sum(0)
++
++_,ax = plt.subplots()
++x_dec.show(ctx=ax)
++ax.imshow(cam_map.detach().cpu(), alpha=0.6, extent=(0,224,224,0),
++              interpolation='bilinear', cmap='magma');
++
++with HookBwd(learn.model[0][-2]) as hookg:
++    with Hook(learn.model[0][-2]) as hook:
++        output = learn.model.eval()(x.cuda())
++        act = hook.stored
++    output[0,cls].backward()
++    grad = hookg.stored
++
++w = grad[0].mean(dim=[1,2], keepdim=True)
++cam_map = (w * act[0]).sum(0)
++
++_,ax = plt.subplots()
++x_dec.show(ctx=ax)
++ax.imshow(cam_map.detach().cpu(), alpha=0.6, extent=(0,224,224,0),
++              interpolation='bilinear', cmap='magma');
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# 1. What is a "hook" in PyTorch?
++# 1. Which layer does CAM use the outputs of?
++# 1. Why does CAM require a hook?
++# 1. Look at the source code of the `ActivationStats` class and see how it uses hooks.
++# 1. Write a hook that stores the activations of a given layer in a model (without peeking, if possible).
++# 1. Why do we call `eval` before getting the activations? Why do we use `no_grad`?
++# 1. Use `torch.einsum` to compute the "dog" or "cat" score of each of the locations in the last activation of the body of the model.
++# 1. How do you check which order the categories are in (i.e., the correspondence of index->category)?
++# 1. Why are we using `decode` when displaying the input image?
++# 1. What is a "context manager"? What special methods need to be defined to create one?
++# 1. Why can't we use plain CAM for the inner layers of a network?
++# 1. Why do we need to register a hook on the backward pass in order to do Grad-CAM?
++# 1. Why can't we call `output.backward()` when `output` is a rank-2 tensor of output activations per image per class?
++
++# ### Further Research
++
++# 1. Try removing `keepdim` and see what happens. Look up this parameter in the PyTorch docs. Why do we need it in this notebook?
++# 1. Create a notebook like this one, but for NLP, and use it to find which words in a movie review are most significant in assessing the sentiment of a particular movie review.
++
++
+diff --git a/nbs/19_learner.py b/nbs/19_learner.py
+new file mode 100644
+index 0000000..916a5e5
+--- /dev/null
++++ ./nbs/19_learner.py
+@@ -0,0 +1,495 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++
++# # A fastai Learner from Scratch
++
++# ## Data
++
++path = untar_data(URLs.IMAGENETTE_160)
++
++t = get_image_files(path)
++t[0]
++
++from glob import glob
++files = L(glob(f'{path}/**/*.JPEG', recursive=True)).map(Path)
++files[0]
++
++im = Image.open(files[0])
++im
++
++im_t = tensor(im)
++im_t.shape
++
++lbls = files.map(Self.parent.name()).unique(); lbls
++
++v2i = lbls.val2idx(); v2i
++
++
++# ### Dataset
++
++class Dataset:
++    def __init__(self, fns): self.fns=fns
++    def __len__(self): return len(self.fns)
++    def __getitem__(self, i):
++        im = Image.open(self.fns[i]).resize((64,64)).convert('RGB')
++        y = v2i[self.fns[i].parent.name]
++        return tensor(im).float()/255, tensor(y)
++
++
++train_filt = L(o.parent.parent.name=='train' for o in files)
++train,valid = files[train_filt],files[~train_filt]
++len(train),len(valid)
++
++train_ds,valid_ds = Dataset(train),Dataset(valid)
++x,y = train_ds[0]
++x.shape,y
++
++show_image(x, title=lbls[y]);
++
++
++def collate(idxs, ds): 
++    xb,yb = zip(*[ds[i] for i in idxs])
++    return torch.stack(xb),torch.stack(yb)
++
++
++x,y = collate([1,2], train_ds)
++x.shape,y
++
++
++class DataLoader:
++    def __init__(self, ds, bs=128, shuffle=False, n_workers=1):
++        self.ds,self.bs,self.shuffle,self.n_workers = ds,bs,shuffle,n_workers
++
++    def __len__(self): return (len(self.ds)-1)//self.bs+1
++
++    def __iter__(self):
++        idxs = L.range(self.ds)
++        if self.shuffle: idxs = idxs.shuffle()
++        chunks = [idxs[n:n+self.bs] for n in range(0, len(self.ds), self.bs)]
++        with ProcessPoolExecutor(self.n_workers) as ex:
++            yield from ex.map(collate, chunks, ds=self.ds)
++
++
++n_workers = min(16, defaults.cpus)
++train_dl = DataLoader(train_ds, bs=128, shuffle=True, n_workers=n_workers)
++valid_dl = DataLoader(valid_ds, bs=256, shuffle=False, n_workers=n_workers)
++xb,yb = first(train_dl)
++xb.shape,yb.shape,len(train_dl)
++
++stats = [xb.mean((0,1,2)),xb.std((0,1,2))]
++stats
++
++
++class Normalize:
++    def __init__(self, stats): self.stats=stats
++    def __call__(self, x):
++        if x.device != self.stats[0].device:
++            self.stats = to_device(self.stats, x.device)
++        return (x-self.stats[0])/self.stats[1]
++
++
++norm = Normalize(stats)
++def tfm_x(x): return norm(x).permute((0,3,1,2))
++
++
++t = tfm_x(x)
++t.mean((0,2,3)),t.std((0,2,3))
++
++
++# ## Module and Parameter
++
++class Parameter(Tensor):
++    def __new__(self, x): return Tensor._make_subclass(Parameter, x, True)
++    def __init__(self, *args, **kwargs): self.requires_grad_()
++
++
++Parameter(tensor(3.))
++
++
++class Module:
++    def __init__(self):
++        self.hook,self.params,self.children,self._training = None,[],[],False
++        
++    def register_parameters(self, *ps): self.params += ps
++    def register_modules   (self, *ms): self.children += ms
++        
++    @property
++    def training(self): return self._training
++    @training.setter
++    def training(self,v):
++        self._training = v
++        for m in self.children: m.training=v
++            
++    def parameters(self):
++        return self.params + sum([m.parameters() for m in self.children], [])
++
++    def __setattr__(self,k,v):
++        super().__setattr__(k,v)
++        if isinstance(v,Parameter): self.register_parameters(v)
++        if isinstance(v,Module):    self.register_modules(v)
++        
++    def __call__(self, *args, **kwargs):
++        res = self.forward(*args, **kwargs)
++        if self.hook is not None: self.hook(res, args)
++        return res
++    
++    def cuda(self):
++        for p in self.parameters(): p.data = p.data.cuda()
++
++
++class ConvLayer(Module):
++    def __init__(self, ni, nf, stride=1, bias=True, act=True):
++        super().__init__()
++        self.w = Parameter(torch.zeros(nf,ni,3,3))
++        self.b = Parameter(torch.zeros(nf)) if bias else None
++        self.act,self.stride = act,stride
++        init = nn.init.kaiming_normal_ if act else nn.init.xavier_normal_
++        init(self.w)
++    
++    def forward(self, x):
++        x = F.conv2d(x, self.w, self.b, stride=self.stride, padding=1)
++        if self.act: x = F.relu(x)
++        return x
++
++
++l = ConvLayer(3, 4)
++len(l.parameters())
++
++xbt = tfm_x(xb)
++r = l(xbt)
++r.shape
++
++
++class Linear(Module):
++    def __init__(self, ni, nf):
++        super().__init__()
++        self.w = Parameter(torch.zeros(nf,ni))
++        self.b = Parameter(torch.zeros(nf))
++        nn.init.xavier_normal_(self.w)
++    
++    def forward(self, x): return x@self.w.t() + self.b
++
++
++l = Linear(4,2)
++r = l(torch.ones(3,4))
++r.shape
++
++
++class T(Module):
++    def __init__(self):
++        super().__init__()
++        self.c,self.l = ConvLayer(3,4),Linear(4,2)
++
++
++t = T()
++len(t.parameters())
++
++t.cuda()
++t.l.w.device
++
++
++# ### Simple CNN
++
++class Sequential(Module):
++    def __init__(self, *layers):
++        super().__init__()
++        self.layers = layers
++        self.register_modules(*layers)
++
++    def forward(self, x):
++        for l in self.layers: x = l(x)
++        return x
++
++
++class AdaptivePool(Module):
++    def forward(self, x): return x.mean((2,3))
++
++
++def simple_cnn():
++    return Sequential(
++        ConvLayer(3 ,16 ,stride=2), #32
++        ConvLayer(16,32 ,stride=2), #16
++        ConvLayer(32,64 ,stride=2), # 8
++        ConvLayer(64,128,stride=2), # 4
++        AdaptivePool(),
++        Linear(128, 10)
++    )
++
++
++m = simple_cnn()
++len(m.parameters())
++
++
++# +
++def print_stats(outp, inp): print (outp.mean().item(),outp.std().item())
++for i in range(4): m.layers[i].hook = print_stats
++
++r = m(xbt)
++r.shape
++
++
++# -
++
++# ## Loss
++
++def nll(input, target): return -input[range(target.shape[0]), target].mean()
++
++
++# +
++def log_softmax(x): return (x.exp()/(x.exp().sum(-1,keepdim=True))).log()
++
++sm = log_softmax(r); sm[0][0]
++# -
++
++loss = nll(sm, yb)
++loss
++
++
++def log_softmax(x): return x - x.exp().sum(-1,keepdim=True).log()
++sm = log_softmax(r); sm[0][0]
++
++x = torch.rand(5)
++a = x.max()
++x.exp().sum().log() == a + (x-a).exp().sum().log()
++
++
++# +
++def logsumexp(x):
++    m = x.max(-1)[0]
++    return m + (x-m[:,None]).exp().sum(-1).log()
++
++logsumexp(r)[0]
++
++
++# -
++
++def log_softmax(x): return x - x.logsumexp(-1,keepdim=True)
++
++
++sm = log_softmax(r); sm[0][0]
++
++
++def cross_entropy(preds, yb): return nll(log_softmax(preds), yb).mean()
++
++
++# ## Learner
++
++class SGD:
++    def __init__(self, params, lr, wd=0.): store_attr(self, 'params,lr,wd')
++    def step(self):
++        for p in self.params:
++            p.data -= (p.grad.data + p.data*self.wd) * self.lr
++            p.grad.data.zero_()
++
++
++# +
++class DataLoaders:
++    def __init__(self, *dls): self.train,self.valid = dls
++
++dls = DataLoaders(train_dl,valid_dl)
++
++
++# -
++
++class Learner:
++    def __init__(self, model, dls, loss_func, lr, cbs, opt_func=SGD):
++        store_attr(self, 'model,dls,loss_func,lr,cbs,opt_func')
++        for cb in cbs: cb.learner = self
++
++    def one_batch(self):
++        self('before_batch')
++        xb,yb = self.batch
++        self.preds = self.model(xb)
++        self.loss = self.loss_func(self.preds, yb)
++        if self.model.training:
++            self.loss.backward()
++            self.opt.step()
++        self('after_batch')
++
++    def one_epoch(self, train):
++        self.model.training = train
++        self('before_epoch')
++        dl = self.dls.train if train else self.dls.valid
++        for self.num,self.batch in enumerate(progress_bar(dl, leave=False)):
++            self.one_batch()
++        self('after_epoch')
++    
++    def fit(self, n_epochs):
++        self('before_fit')
++        self.opt = self.opt_func(self.model.parameters(), self.lr)
++        self.n_epochs = n_epochs
++        try:
++            for self.epoch in range(n_epochs):
++                self.one_epoch(True)
++                self.one_epoch(False)
++        except CancelFitException: pass
++        self('after_fit')
++        
++    def __call__(self,name):
++        for cb in self.cbs: getattr(cb,name,noop)()
++
++
++# ### Callbacks
++
++class Callback(GetAttr): _default='learner'
++
++
++class SetupLearnerCB(Callback):
++    def before_batch(self):
++        xb,yb = to_device(self.batch)
++        self.learner.batch = tfm_x(xb),yb
++
++    def before_fit(self): self.model.cuda()
++
++
++class TrackResults(Callback):
++    def before_epoch(self): self.accs,self.losses,self.ns = [],[],[]
++        
++    def after_epoch(self):
++        n = sum(self.ns)
++        print(self.epoch, self.model.training,
++              sum(self.losses).item()/n, sum(self.accs).item()/n)
++        
++    def after_batch(self):
++        xb,yb = self.batch
++        acc = (self.preds.argmax(dim=1)==yb).float().sum()
++        self.accs.append(acc)
++        n = len(xb)
++        self.losses.append(self.loss*n)
++        self.ns.append(n)
++
++
++cbs = [SetupLearnerCB(),TrackResults()]
++learn = Learner(simple_cnn(), dls, cross_entropy, lr=0.1, cbs=cbs)
++learn.fit(1)
++
++
++# ### Scheduling the Learning Rate
++
++class LRFinder(Callback):
++    def before_fit(self):
++        self.losses,self.lrs = [],[]
++        self.learner.lr = 1e-6
++        
++    def before_batch(self):
++        if not self.model.training: return
++        self.opt.lr *= 1.2
++
++    def after_batch(self):
++        if not self.model.training: return
++        if self.opt.lr>10 or torch.isnan(self.loss): raise CancelFitException
++        self.losses.append(self.loss.item())
++        self.lrs.append(self.opt.lr)
++
++
++lrfind = LRFinder()
++learn = Learner(simple_cnn(), dls, cross_entropy, lr=0.1, cbs=cbs+[lrfind])
++learn.fit(2)
++
++plt.plot(lrfind.lrs[:-2],lrfind.losses[:-2])
++plt.xscale('log')
++
++
++class OneCycle(Callback):
++    def __init__(self, base_lr): self.base_lr = base_lr
++    def before_fit(self): self.lrs = []
++
++    def before_batch(self):
++        if not self.model.training: return
++        n = len(self.dls.train)
++        bn = self.epoch*n + self.num
++        mn = self.n_epochs*n
++        pct = bn/mn
++        pct_start,div_start = 0.25,10
++        if pct<pct_start:
++            pct /= pct_start
++            lr = (1-pct)*self.base_lr/div_start + pct*self.base_lr
++        else:
++            pct = (pct-pct_start)/(1-pct_start)
++            lr = (1-pct)*self.base_lr
++        self.opt.lr = lr
++        self.lrs.append(lr)
++
++
++onecyc = OneCycle(0.1)
++learn = Learner(simple_cnn(), dls, cross_entropy, lr=0.1, cbs=cbs+[onecyc])
++
++learn.fit(8)
++
++plt.plot(onecyc.lrs);
++
++# ## Conclusion
++
++# ## Questionnaire
++
++# > tip: Experiments: For the questions here that ask you to explain what some function or class is, you should also complete your own code experiments.
++
++# 1. What is `glob`?
++# 1. How do you open an image with the Python imaging library?
++# 1. What does `L.map` do?
++# 1. What does `Self` do?
++# 1. What is `L.val2idx`?
++# 1. What methods do you need to implement to create your own `Dataset`?
++# 1. Why do we call `convert` when we open an image from Imagenette?
++# 1. What does `~` do? How is it useful for splitting training and validation sets?
++# 1. Does `~` work with the `L` or `Tensor` classes? What about NumPy arrays, Python lists, or pandas DataFrames?
++# 1. What is `ProcessPoolExecutor`?
++# 1. How does `L.range(self.ds)` work?
++# 1. What is `__iter__`?
++# 1. What is `first`?
++# 1. What is `permute`? Why is it needed?
++# 1. What is a recursive function? How does it help us define the `parameters` method?
++# 1. Write a recursive function that returns the first 20 items of the Fibonacci sequence.
++# 1. What is `super`?
++# 1. Why do subclasses of `Module` need to override `forward` instead of defining `__call__`?
++# 1. In `ConvLayer`, why does `init` depend on `act`?
++# 1. Why does `Sequential` need to call `register_modules`?
++# 1. Write a hook that prints the shape of every layer's activations.
++# 1. What is "LogSumExp"?
++# 1. Why is `log_softmax` useful?
++# 1. What is `GetAttr`? How is it helpful for callbacks?
++# 1. Reimplement one of the callbacks in this chapter without inheriting from `Callback` or `GetAttr`.
++# 1. What does `Learner.__call__` do?
++# 1. What is `getattr`? (Note the case difference to `GetAttr`!)
++# 1. Why is there a `try` block in `fit`?
++# 1. Why do we check for `model.training` in `one_batch`?
++# 1. What is `store_attr`?
++# 1. What is the purpose of `TrackResults.before_epoch`?
++# 1. What does `model.cuda` do? How does it work?
++# 1. Why do we need to check `model.training` in `LRFinder` and `OneCycle`?
++# 1. Use cosine annealing in `OneCycle`.
++
++# ### Further Research
++
++# 1. Write `resnet18` from scratch (refer to <<chapter_resnet>> as needed), and train it with the `Learner` in this chapter.
++# 1. Implement a batchnorm layer from scratch and use it in your `resnet18`.
++# 1. Write a Mixup callback for use in this chapter.
++# 1. Add momentum to SGD.
++# 1. Pick a few features that you're interested in from fastai (or any other library) and implement them in this chapter.
++# 1. Pick a research paper that's not yet implemented in fastai or PyTorch and implement it in this chapter.
++#   - Port it over to fastai.
++#   - Submit a pull request to fastai, or create your own extension module and release it. 
++#   - Hint: you may find it helpful to use [`nbdev`](https://nbdev.fast.ai/) to create and deploy your package.
++
++
+diff --git a/nbs/20_conclusion.py b/nbs/20_conclusion.py
+new file mode 100644
+index 0000000..5b56f23
+--- /dev/null
++++ ./nbs/20_conclusion.py
+@@ -0,0 +1,24 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# # Concluding Thoughts
++
++
+diff --git a/nbs/app_blog.py b/nbs/app_blog.py
+new file mode 100644
+index 0000000..1772690
+--- /dev/null
++++ ./nbs/app_blog.py
+@@ -0,0 +1,40 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     split_at_heading: true
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++#hide
++from fastbook import *
++from fastai.vision.widgets import *
++
++# # Creating a Blog
++
++# ## Blogging with GitHub Pages
++
++# ### Creating the Repository
++
++# ### Setting Up Your Home Page
++
++# ### Creating Posts
++
++# ### Synchronizing GitHub and Your Computer
++
++# ## Jupyter for Blogging
++
++
+diff --git a/nbs/app_jupyter.py b/nbs/app_jupyter.py
+new file mode 100644
+index 0000000..4b3c91c
+--- /dev/null
++++ ./nbs/app_jupyter.py
+@@ -0,0 +1,75 @@
++# ---
++# jupyter:
++#   jupytext:
++#     formats: ipynb,py
++#     text_representation:
++#       extension: .py
++#       format_name: light
++#       format_version: '1.5'
++#       jupytext_version: 1.5.2
++#   kernelspec:
++#     display_name: Python 3
++#     language: python
++#     name: python3
++# ---
++
++#hide
++# !pip install -Uqq fastbook
++import fastbook
++fastbook.setup_book()
++
++# # Appendix: Jupyter Notebook 101
++
++# ## Introduction
++
++1+1
++
++# ## Writing
++
++3/2
++
++# ## Modes
++
++# ## Other Important Considerations
++
++# ## Markdown Formatting
++#
++
++# ### Italics, Bold, Strikethrough, Inline, Blockquotes and Links
++
++# ### Headings
++
++# ### Lists
++
++# ## Code Capabilities
++
++# Import necessary libraries
++from fastai.vision.all import * 
++import matplotlib.pyplot as plt
++
++from PIL import Image
++
++a = 1
++b = a + 1
++c = b + a + 1
++d = c + b + a + 1
++a, b, c ,d
++
++plt.plot([a,b,c,d])
++plt.show()
++
++Image.open('images/chapter1_cat_example.jpg')
++
++# ## Running the App Locally
++
++# ## Creating a Notebook
++
++# ## Shortcuts and Tricks
++
++# ### Command Mode Shortcuts
++
++# ### Cell Tricks
++
++# ### Line Magics
++
++# %timeit [i+1 for i in range(1000)]
+diff --git a/setup.sh b/setup.sh
+new file mode 100755
+index 0000000..74a3fd2
+--- /dev/null
++++ ./setup.sh
+@@ -0,0 +1,6 @@
++#!/bin/zsh
++SCRIPT=$(realpath "$0")
++SCRIPTPATH=$(dirname "$SCRIPT")
++cd "$SCRIPTPATH"
++
++find . -type f -name \*.ipynb -exec jupytext --set-formats ipynb,py {} \;
