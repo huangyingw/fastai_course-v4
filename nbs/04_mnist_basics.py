@@ -20,33 +20,25 @@ from fastbook import *
 from fastai.vision.all import *
 import fastbook
 fastbook.setup_book()
-
-# +
-# hide
-
 matplotlib.rc('image', cmap='Greys')
-# -
-
-# # Under the Hood: Training a Digit Classifier
-
-# ## Pixels: The Foundations of Computer Vision
-
-# ## Sidebar: Tenacity and Deep Learning
-
-# ## End sidebar
-
 path = untar_data(URLs.MNIST_SAMPLE)
+threes = (path / 'train' / '3').ls().sorted()
+sevens = (path / 'train' / '7').ls().sorted()
+seven_tensors = [tensor(Image.open(o)) for o in sevens]
+three_tensors = [tensor(Image.open(o)) for o in threes]
+stacked_sevens = torch.stack(seven_tensors).float() / 255
+stacked_threes = torch.stack(three_tensors).float() / 255
+train_x = torch.cat([stacked_threes, stacked_sevens]).view(-1, 28 * 28)
+train_y = tensor([1] * len(threes) + [0] * len(sevens)).unsqueeze(1)
+dset = list(zip(train_x, train_y))
+valid_x = torch.cat([valid_3_tens, valid_7_tens]).view(-1, 28 * 28)
+valid_y = tensor([1] * len(valid_3_tens) + [0] * len(valid_7_tens)).unsqueeze(1)
+valid_dset = list(zip(valid_x, valid_y))
+def linear1(xb): return xb@weights + bias
+
 
 # hide
 Path.BASE_PATH = path
-
-path.ls()
-
-(path / 'train').ls()
-
-threes = (path / 'train' / '3').ls().sorted()
-sevens = (path / 'train' / '7').ls().sorted()
-threes
 
 im3_path = threes[1]
 im3 = Image.open(im3_path)
@@ -62,15 +54,9 @@ df.style.set_properties(**{'font-size': '6pt'}).background_gradient('Greys')
 
 # ## First Try: Pixel Similarity
 
-seven_tensors = [tensor(Image.open(o)) for o in sevens]
-three_tensors = [tensor(Image.open(o)) for o in threes]
-len(three_tensors), len(seven_tensors)
 
 show_image(three_tensors[1])
 
-stacked_sevens = torch.stack(seven_tensors).float() / 255
-stacked_threes = torch.stack(three_tensors).float() / 255
-stacked_threes.shape
 
 len(stacked_threes.shape)
 
@@ -306,19 +292,6 @@ step->predict[label=repeat]
 
 # ## The MNIST Loss Function
 
-train_x = torch.cat([stacked_threes, stacked_sevens]).view(-1, 28 * 28)
-
-train_y = tensor([1] * len(threes) + [0] * len(sevens)).unsqueeze(1)
-train_x.shape, train_y.shape
-
-dset = list(zip(train_x, train_y))
-x, y = dset[0]
-x.shape, y
-
-valid_x = torch.cat([valid_3_tens, valid_7_tens]).view(-1, 28 * 28)
-valid_y = tensor([1] * len(valid_3_tens) + [0] * len(valid_7_tens)).unsqueeze(1)
-valid_dset = list(zip(valid_x, valid_y))
-
 
 def init_params(size, std=1.0): return (torch.randn(size) * std).requires_grad_()
 
@@ -328,9 +301,6 @@ weights = init_params((28 * 28, 1))
 bias = init_params(1)
 
 (train_x[0] * weights.T).sum() + bias
-
-
-def linear1(xb): return xb@weights + bias
 
 
 preds = linear1(train_x)
