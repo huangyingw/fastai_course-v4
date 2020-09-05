@@ -34,6 +34,8 @@ dset = list(zip(train_x, train_y))
 valid_x = torch.cat([valid_3_tens, valid_7_tens]).view(-1, 28 * 28)
 valid_y = tensor([1] * len(valid_3_tens) + [0] * len(valid_7_tens)).unsqueeze(1)
 valid_dset = list(zip(valid_x, valid_y))
+valid_dl = DataLoader(valid_dset, batch_size=256)
+dls = DataLoaders(dl, valid_dl)
 def linear1(xb): return xb @ weights + bias
 def mnist_loss(predictions, targets):
     predictions = predictions.sigmoid()
@@ -377,7 +379,6 @@ dl = DataLoader(dset, batch_size=256)
 xb, yb = first(dl)
 xb.shape, yb.shape
 
-valid_dl = DataLoader(valid_dset, batch_size=256)
 
 batch = train_x[:4]
 batch.shape
@@ -469,7 +470,6 @@ linear_model = nn.Linear(28 * 28, 1)
 opt = SGD(linear_model.parameters(), lr)
 train_model(linear_model, 20)
 
-dls = DataLoaders(dl, valid_dl)
 
 learn = Learner(dls, nn.Linear(28 * 28, 1), opt_func=SGD,
                 loss_func=mnist_loss, metrics=batch_accuracy)
