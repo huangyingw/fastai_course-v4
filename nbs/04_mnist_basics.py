@@ -35,6 +35,23 @@ valid_x = torch.cat([valid_3_tens, valid_7_tens]).view(-1, 28 * 28)
 valid_y = tensor([1] * len(valid_3_tens) + [0] * len(valid_7_tens)).unsqueeze(1)
 valid_dset = list(zip(valid_x, valid_y))
 def linear1(xb): return xb @ weights + bias
+def mnist_loss(predictions, targets):
+    predictions = predictions.sigmoid()
+    return torch.where(targets == 1, 1 - predictions, predictions).mean()
+def calc_grad(xb, yb, model):
+    preds = model(xb)
+    loss = mnist_loss(preds, yb)
+    loss.backward()
+def train_epoch(model, lr, params):
+    for xb, yb in dl:
+        calc_grad(xb, yb, model)
+        for p in params:
+            p.data -= p.grad * lr
+            p.grad.zero_()
+def batch_accuracy(xb, yb):
+    preds = xb.sigmoid()
+    correct = (preds > 0.5) == yb
+    return correct.float().mean()
 
 
 # hide
@@ -339,14 +356,6 @@ def sigmoid(x): return 1 / (1 + torch.exp(-x))
 plot_function(torch.sigmoid, title='Sigmoid', min=-4, max=4)
 
 
-def mnist_loss(predictions, targets):
-    predictions = predictions.sigmoid()
-    return torch.where(targets == 1, 1 - predictions, predictions).mean()
-
-
-mnist_loss(tensor([0.9, 0.4, 0.8]), trgts)
-
-
 # ### SGD and Mini-Batches
 
 coll = range(15)
@@ -383,12 +392,6 @@ loss.backward()
 weights.grad.shape, weights.grad.mean(), bias.grad
 
 
-def calc_grad(xb, yb, model):
-    preds = model(xb)
-    loss = mnist_loss(preds, yb)
-    loss.backward()
-
-
 calc_grad(batch, train_y[:4], linear1)
 weights.grad.mean(), bias.grad
 
@@ -399,21 +402,7 @@ weights.grad.zero_()
 bias.grad.zero_()
 
 
-def train_epoch(model, lr, params):
-    for xb, yb in dl:
-        calc_grad(xb, yb, model)
-        for p in params:
-            p.data -= p.grad * lr
-            p.grad.zero_()
-
-
 (preds > 0.0).float() == train_y[:4]
-
-
-def batch_accuracy(xb, yb):
-    preds = xb.sigmoid()
-    correct = (preds > 0.5) == yb
-    return correct.float().mean()
 
 
 batch_accuracy(linear1(batch), train_y[:4])
