@@ -52,7 +52,7 @@ dls = pets.dataloaders(path / "images")
 
 # ## Presizing
 
-# + hide_input=false
+# +
 dblock1 = DataBlock(blocks=(ImageBlock(), CategoryBlock()),
                     get_y=parent_label,
                     item_tfms=Resize(460))
