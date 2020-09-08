@@ -20,6 +20,3 @@
 [gdif]
     ignore = nbs/*.py
     ignore = setup.sh
-[deploy]
-	host = localhost
-	path = ~/myproject/git/AI/fastai/course-v4
