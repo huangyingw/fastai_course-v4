@@ -7,10 +7,3 @@ index 0000000..7046330
 +[submodule "fastai"]
 +	path = fastai
 +	url = git@github.com:fastai/fastai.git
-diff --git a/includefile.rsync b/includefile.rsync
-new file mode 100644
-index 0000000..936da7d
---- /dev/null
-+++ ./includefile.rsync
-@@ -0,0 +1 @@
-+*.pth
