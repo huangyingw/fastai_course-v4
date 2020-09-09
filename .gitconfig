@@ -22,3 +22,6 @@
     ignore = fastai
     ignore = nbs/*.py
     ignore = setup.sh
+[deploy]
+	host = mini
+	path = ~/myproject/git/AI/fastai/course-v4
