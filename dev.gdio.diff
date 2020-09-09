@@ -7,10 +7,3 @@ index 0000000..7046330
 +[submodule "fastai"]
 +	path = fastai
 +	url = git@github.com:fastai/fastai.git
-diff --git a/fastai b/fastai
-new file mode 160000
-index 0000000..22e1238
---- /dev/null
-+++ ./fastai
-@@ -0,0 +1 @@
-+Subproject commit 22e12389fc10b740f71480d75a90e724fe311d87
