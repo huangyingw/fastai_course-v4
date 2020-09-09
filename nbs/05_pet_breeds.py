@@ -86,6 +86,7 @@ pets1 = DataBlock(blocks=(ImageBlock, CategoryBlock),
 pets1.summary(path / "images")
 
 learn = cnn_learner(dls, resnet34, metrics=error_rate)
+
 learn.fine_tune(2)
 learn.save('05_pet_breeds')
 

@@ -18,5 +18,7 @@
     remote = origin
     merge = refs/heads/master
 [gdif]
+    ignore = .gitignore
+    ignore = fastai
     ignore = nbs/*.py
     ignore = setup.sh
